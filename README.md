@@ -1,6 +1,6 @@
 # UIspa
 
-Extensión para **Chrome** y **Firefox** que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
+Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
 
 > Proyecto no oficial. No tiene relación con Hispashare: solo cambia cómo se ve la web en tu navegador y no aloja ni distribuye ningún contenido.
 
@@ -52,6 +52,28 @@ Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas
 
 > **¿Tenías la versión 1.x de Chrome?** Antes la extensión estaba en la raíz del repositorio y ahora está en la carpeta `chrome/`. Quita la antigua en `chrome://extensions` y carga la nueva como se indica arriba. Tendrás que volver a configurar Plex o Jellyfin.
 
+### Safari (experimental)
+
+Safari solo permite instalar de forma permanente extensiones firmadas con una cuenta de pago de Apple, así que esta versión se compila en tu propio Mac. Necesitas macOS con **Xcode** (gratis en la App Store) y tu Apple ID.
+
+1. Descarga el repositorio (**Code → Download ZIP**) y descomprímelo.
+2. En Terminal, dentro de esa carpeta:
+   ```
+   ./build-safari.sh
+   open xcode/UIspa/UIspa.xcodeproj
+   ```
+3. En Xcode, en **Signing & Capabilities** de los dos targets (**UIspa** y **UIspa Extension**), elige el mismo **Team** (tu Apple ID, *Personal Team*) y el mismo **Signing Certificate**.
+4. Elige el esquema **UIspa** y **My Mac**, y pulsa ▶. Se abrirá una ventanita de UIspa: ciérrala.
+5. En Safari:
+   - **Ajustes → Avanzado** → marca **Mostrar funciones para desarrolladores web**.
+   - **Ajustes → Desarrollador** → marca **Permitir extensiones sin firmar**.
+   - **Ajustes → Extensiones** → activa **UIspa**.
+   - Abre Hispashare, pulsa el icono **UI** de la barra y elige **Permitir siempre en este sitio web**. Recarga la página.
+
+«Permitir extensiones sin firmar» se desactiva cada vez que cierras Safari: si UIspa desaparece, vuelve a marcarlo.
+
+Limitaciones en Safari: los botones de copiar funcionan igual que en los otros navegadores, pero los atajos de teclado y el menú del botón derecho pueden no copiar.
+
 ## Conectar con Plex o Jellyfin
 
 1. Abre los ajustes de UIspa de cualquiera de estas formas:
@@ -63,6 +85,8 @@ Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas
    - **Plex:** tu token. En Plex Web abre cualquier película o episodio → **⋯ → Obtener información → Ver XML** y copia lo que va después de `X-Plex-Token=` en la dirección.
    - **Jellyfin:** una clave de API. Con una cuenta de administrador ve a **Panel de control → Claves de API**, pulsa **+** y copia la clave.
 4. Pulsa **Guardar**. El navegador te pedirá permiso para acceder solo a esa dirección.
+
+En Safari, abre los ajustes desde el menú **Más** de Hispashare o en **Safari → Ajustes → Extensiones → UIspa → Ajustes**.
 
 ## Privacidad
 
@@ -83,12 +107,14 @@ Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas
 ## Estructura
 
 ```
-chrome/        Extensión para Chrome (Manifest V3)
-firefox/       Extensión para Firefox (Manifest V2, firmada por Mozilla)
-updates.json   Aviso de actualizaciones para Firefox
+chrome/           Extensión para Chrome (Manifest V3)
+firefox/          Extensión para Firefox (Manifest V2, firmada por Mozilla)
+safari/           Extensión para Safari (experimental)
+build-safari.sh   Genera el proyecto de Xcode de la versión de Safari
+updates.json      Aviso de actualizaciones para Firefox
 ```
 
-Las dos versiones comparten el mismo código; solo cambian el manifiesto y el segundo plano:
+Las tres versiones comparten el mismo código; solo cambian el manifiesto y el segundo plano:
 
 | Archivo | Función |
 |---|---|
@@ -108,6 +134,9 @@ Las dos versiones comparten el mismo código; solo cambian el manifiesto y el se
 
 ## Novedades
 
+**Safari (experimental)**
+- Nueva versión para Safari que se compila en tu Mac con Xcode (`build-safari.sh`).
+
 **2.0.0**
 - Primera versión pública para Firefox, firmada por Mozilla y con actualizaciones automáticas.
 - Chrome y Firefox en el mismo repositorio (`chrome/` y `firefox/`).
@@ -125,7 +154,9 @@ Para probar cambios sin empaquetar:
 - **Chrome:** `chrome://extensions` → **Modo de desarrollador** → **Cargar descomprimida** → carpeta `chrome/`. Tras cada cambio, pulsa ↻.
 - **Firefox:** `about:debugging` → **Este Firefox** → **Cargar complemento temporal** → archivo `firefox/manifest.json`. Se quita al cerrar Firefox.
 
-El código común (rediseño, botones y marcas) es idéntico en las dos carpetas: si cambias algo, cópialo a ambas.
+El código común (rediseño, botones y marcas) es idéntico en las tres carpetas: si cambias algo, cópialo a todas.
+
+- **Safari:** con Safari 26 o posterior puedes probar sin Xcode en **Ajustes → Desarrollador → Añadir extensión temporal** → carpeta `safari/`. Se quita al cerrar Safari.
 
 ### Publicar una versión nueva
 

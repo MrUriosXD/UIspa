@@ -1,0 +1,102 @@
+{
+  "manifest_version": 3,
+  "name": "UIspa",
+  "version": "2.0.0",
+  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex o Jellyfin. Versión experimental para Safari.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "clipboardWrite",
+    "contextMenus",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.hispashare.org/*",
+    "*://*.hispashare.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "theme-early.js"
+      ],
+      "css": [
+        "theme.css",
+        "content.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "theme.js"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "content.js",
+        "media.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "copy-all": {
+      "suggested_key": {
+        "default": "Alt+Shift+C"
+      },
+      "description": "Copiar todos los enlaces ed2k de la página"
+    },
+    "copy-selected": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Copiar los capítulos marcados"
+    }
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    },
+    "default_title": "UIspa: copiar todos los enlaces de la página"
+  },
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "homepage_url": "https://github.com/ahhhv/UIspa",
+  "browser_specific_settings": {
+    "safari": {
+      "strict_min_version": "16.4"
+    }
+  }
+}
