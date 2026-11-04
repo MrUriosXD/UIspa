@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>UIspa · Ajustes</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <h1 id="title"><span>UI</span>spa · Ajustes</h1>
+
+  <section>
+    <h2>Conexión con Plex</h2>
+    <p class="muted">Si lo configuras, cada ficha de Hispashare te dirá qué episodios o películas ya tienes en tu servidor Plex. Es opcional: sin configurarlo, la extensión funciona igual.</p>
+
+    <label for="url">Dirección del servidor</label>
+    <input id="url" type="url" placeholder="http://192.168.1.50:32400" autocomplete="off" spellcheck="false">
+
+    <label for="token">Token de Plex</label>
+    <div class="row">
+      <input id="token" type="password" placeholder="xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+      <button id="show" type="button" class="ghost" title="Mostrar u ocultar">👁</button>
+    </div>
+
+    <div class="actions">
+      <button id="test" type="button" class="ghost">Probar conexión</button>
+      <button id="save" type="button">Guardar</button>
+      <button id="clear" type="button" class="ghost danger">Desconectar</button>
+    </div>
+    <div id="status" role="status"></div>
+
+    <details>
+      <summary>¿Dónde encuentro la dirección y el token?</summary>
+      <ol>
+        <li><b>Dirección:</b> la IP del ordenador o NAS donde corre Plex con el puerto <code>32400</code>, por ejemplo <code>http://192.168.1.50:32400</code>. Fuera de casa necesitarás una dirección accesible desde fuera.</li>
+        <li><b>Token:</b> abre Plex en el navegador, entra en cualquier película o episodio, pulsa <b>⋯ → Obtener información → Ver XML</b>. En la dirección de la página que se abre, copia lo que va después de <code>X-Plex-Token=</code>.</li>
+      </ol>
+      <p class="muted">El token se guarda solo en este navegador y únicamente se envía a tu servidor Plex, nunca a Hispashare ni a ningún otro sitio. Da acceso a tu servidor: no lo compartas.</p>
+    </details>
+  </section>
+</main>
+<script src="options.js"></script>
+</body>
+</html>

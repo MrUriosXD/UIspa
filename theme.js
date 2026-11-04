@@ -1,0 +1,383 @@
+// Rediseño de Hispashare: reconstruye la página con un diseño limpio
+// reutilizando los elementos originales (para que sigan funcionando
+// votar, comentarios, popup de enlaces, búsqueda avanzada…).
+(() => {
+  "use strict";
+  const html = document.documentElement;
+
+  // Botón para volver al diseño moderno cuando está desactivado
+  if (!html.classList.contains("hcm")) {
+    const b = document.createElement("button");
+    b.id = "hcm-enable";
+    b.textContent = "✨ Vista moderna";
+    b.title = "Activar el diseño de UIspa";
+    b.addEventListener("click", () => {
+      try { localStorage.removeItem("hcm-off"); } catch (_) {}
+      location.reload();
+    });
+    document.body.appendChild(b);
+    return;
+  }
+
+  // ------------------------------------------------------------ utilidades
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  function h(tag, attrs = {}, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v);
+    }
+    for (const k of kids.flat(Infinity)) if (k != null && k !== false) el.append(k);
+    return el;
+  }
+  const txt = (el) => (el ? el.textContent.replace(/\s+/g, " ").trim() : "");
+  const ratingOf = (el) => { const m = txt(el).match(/(\d+(?:[.,]\d+)?)\s*$/); return m ? m[1].replace(",", ".") : null; };
+  const ratingClass = (r) => (r == null ? "" : r >= 7.5 ? "hcm-good" : r >= 6 ? "hcm-mid" : "hcm-low");
+
+  // Párrafos INFO → { "Género": <p>, … } y el contenido sin la etiqueta
+  function infoMap(root) {
+    const map = {};
+    $$("p.INFO", root).forEach((p) => {
+      const s = $("strong", p);
+      if (!s) return;
+      map[txt(s).replace(/:$/, "")] = p;
+    });
+    return map;
+  }
+  function infoContent(p) {
+    if (!p) return null;
+    const c = p.cloneNode(true);
+    c.querySelector("strong")?.remove();
+    return c;
+  }
+  // "Series > Acción / Drama" → { type, links[] }
+  function parseGenre(p) {
+    if (!p) return { type: "", links: [] };
+    const type = (p.textContent.match(/:\s*([^>]+?)\s*>/) || [])[1] || "";
+    return { type, links: $$("a", p).map((a) => ({ href: a.getAttribute("href"), text: txt(a) })) };
+  }
+  const typeLabel = (t) => ({ "Películas": "Película", "Series": "Serie", "Documentales": "Documental", "Música": "Música" }[t] || t);
+
+  // ------------------------------------------------------------ estructura base
+  const container = $(".CONTAINER");
+  const center = $(".CENTER");
+  if (!container || !center) { html.classList.remove("hcm", "hcm-loading"); return; }
+
+  const root = h("div", { id: "hcm-root" });
+  const main = h("main", { class: "hcm-main" });
+
+  // ---------- barra superior
+  function buildTopbar() {
+    const menuLinks = $$(".LEFT .BLOCK_CONTAINER:first-child .CONTENT a").map((a) =>
+      h("a", { href: a.getAttribute("href"), target: a.getAttribute("target") }, txt(a).replace(/^[^\wÁÉÍÓÚáéíóúÑñ]+/u, "")));
+
+    // Desplegables de géneros
+    const genreMenus = $$(".EXPAND > div[id^='EXP_']").map((d) => {
+      const label = txt($("span", d));
+      const list = $("ul", d)?.cloneNode(true);
+      return h("div", { class: "hcm-dd" },
+        h("button", { type: "button", class: "hcm-dd-btn" }, label, h("span", { class: "hcm-caret" }, "▾")),
+        h("div", { class: "hcm-dd-menu hcm-cols" }, list));
+    });
+
+    // Lo + popular
+    const popBlock = $$(".BLOCK_CONTAINER").find((b) => /popular/i.test(txt($(".TITLE", b))));
+    let popular = null;
+    if (popBlock) {
+      const ul = h("ul", {}, $$(".CONTENT a", popBlock).map((a) => h("li", {}, h("a", { href: a.getAttribute("href"), title: a.title || txt(a) }, txt(a)))));
+      popular = h("div", { class: "hcm-dd" },
+        h("button", { type: "button", class: "hcm-dd-btn" }, "🔥 Popular", h("span", { class: "hcm-caret" }, "▾")),
+        h("div", { class: "hcm-dd-menu hcm-cols" }, ul));
+    }
+
+    // Buscador
+    const q = new URLSearchParams(location.search).get("q") || "";
+    const search = h("form", {
+      class: "hcm-search",
+      onsubmit: (e) => {
+        e.preventDefault();
+        const v = e.target.q.value.trim();
+        if (v) location.href = "/?view=advsearch&q=" + encodeURIComponent(v);
+      }
+    }, h("input", { type: "search", name: "q", placeholder: "Buscar películas, series…", value: q, autocomplete: "off" }));
+
+    // Búsqueda avanzada (se mueve el bloque original para que siga funcionando)
+    const adv = $("#BLOCK_SEARCH3");
+    let advBtn = null, advPanel = null;
+    if (adv) {
+      advPanel = h("div", { class: "hcm-adv", hidden: true });
+      adv.style.display = "block";
+      advPanel.append(adv);
+      advBtn = h("button", { type: "button", class: "hcm-icon-btn", title: "Búsqueda avanzada",
+        onclick: () => (advPanel.hidden = !advPanel.hidden) }, "⚙");
+    }
+
+    // Cuenta
+    const login = document.forms.form_login;
+    const avatar = $(".LEFT .BLOCK_CONTAINER:nth-child(2) img")?.src;
+    const user = login ? txt($(".SEPC", login)) : "";
+    let account = null;
+    if (user) {
+      account = h("div", { class: "hcm-dd hcm-dd-right" },
+        h("button", { type: "button", class: "hcm-dd-btn hcm-user" },
+          avatar ? h("img", { src: avatar, alt: "" }) : null, h("span", { class: "hcm-user-name" }, user), h("span", { class: "hcm-caret" }, "▾")),
+        h("div", { class: "hcm-dd-menu" },
+          h("a", { href: "?view=profile" }, "Cambiar datos"),
+          h("a", { href: "#", onclick: (e) => { e.preventDefault(); login.submit(); } }, "Cerrar sesión")));
+    } else {
+      // sin sesión: muestra el bloque original de acceso dentro de un desplegable
+      const accBlock = $$(".LEFT .BLOCK_CONTAINER")[1];
+      if (accBlock) {
+        account = h("div", { class: "hcm-dd hcm-dd-right" },
+          h("button", { type: "button", class: "hcm-dd-btn" }, "Entrar", h("span", { class: "hcm-caret" }, "▾")),
+          h("div", { class: "hcm-dd-menu hcm-login" }, $(".CONTENT", accBlock)));
+      }
+    }
+
+    const classic = h("button", {
+      type: "button", class: "hcm-icon-btn", title: "Volver al diseño original",
+      onclick: () => { try { localStorage.setItem("hcm-off", "1"); } catch (_) {} location.reload(); }
+    }, "◐");
+
+    const bar = h("header", { class: "hcm-top" },
+      h("div", { class: "hcm-top-inner" },
+        h("a", { class: "hcm-logo", href: "/" }, h("span", {}, "Hispa"), "Share"),
+        h("nav", { class: "hcm-nav" }, genreMenus, popular, h("div", { class: "hcm-dd" },
+          h("button", { type: "button", class: "hcm-dd-btn" }, "Más", h("span", { class: "hcm-caret" }, "▾")),
+          h("div", { class: "hcm-dd-menu" }, menuLinks, openSettings()))),
+        h("div", { class: "hcm-top-right" }, search, advBtn, account, classic)));
+    return { bar, advPanel };
+  }
+
+  // Enlace a los ajustes de la extensión (conexión con Plex)
+  function openSettings() {
+    const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+    if (!ext?.runtime?.sendMessage) return null;
+    return h("a", { href: "#", class: "hcm-settings-link", onclick: (e) => {
+      e.preventDefault();
+      ext.runtime.sendMessage({ action: "open-options" });
+    } }, "⚙ Ajustes de la extensión (Plex)");
+  }
+
+  // Desplegables: abrir con clic, cerrar al hacer clic fuera
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".hcm-dd-btn");
+    $$(".hcm-dd.hcm-open").forEach((d) => { if (!btn || d !== btn.parentElement) d.classList.remove("hcm-open"); });
+    if (btn) btn.parentElement.classList.toggle("hcm-open");
+  });
+
+  // ------------------------------------------------------------ listado (portada, búsquedas)
+  function buildList() {
+    const rows = $$("tr", center).filter((tr) => $("td.L1 a[href*='view=title'] img", tr) && $("td.R1 h1", tr));
+    if (!rows.length) return false;
+    const table = rows[0].closest("table");
+
+    // Barra de ordenación (se mueve el formulario original)
+    const sortForm = $("form[name='query_options']", table);
+    const headTxt = sortForm ? "" : txt($("th", table));
+    const toolbar = h("div", { class: "hcm-toolbar" },
+      h("h1", { class: "hcm-page-title" }, pageTitle() || headTxt || "Novedades"),
+      sortForm);
+
+    const grid = h("div", { class: "hcm-grid" });
+    rows.forEach((tr) => {
+      const a = $("td.R1 h1 a", tr);
+      const href = a.getAttribute("href");
+      const smallTxt = txt($("small", a));
+      const title = txt(a).replace(smallTxt, "").trim();
+      const meta = smallTxt.replace(/^\(|\)$/g, "");
+      const yearM = meta.match(/(\d{4})\s*$/);
+      const year = yearM ? yearM[1] : "";
+      const director = meta.replace(/,?\s*\d{4}\s*$/, "").trim();
+      const rating = ratingOf($(".STARS_CONTAINER", tr));
+      const plot = txt($("p.TEXT", tr));
+      const info = infoMap(tr);
+      const g = parseGenre(info["Género"]);
+      const quality = txt(infoContent(info["Calidad"]));
+      const last = txt(infoContent(info["Última publicación"]));
+      const isNew = /^hoy|^ayer/i.test(last);
+      const img = $("td.L1 img", tr);
+
+      grid.append(h("a", { class: "hcm-card", href, title: `${title}${year ? " (" + year + ")" : ""}` },
+        h("div", { class: "hcm-poster" },
+          h("img", { src: img.getAttribute("src"), alt: title, loading: "lazy" }),
+          rating ? h("span", { class: "hcm-rating " + ratingClass(+rating) }, "★ " + rating) : null,
+          isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null,
+          h("div", { class: "hcm-hover" },
+            plot ? h("p", {}, plot) : null,
+            quality ? h("div", { class: "hcm-hover-q" }, quality) : null)),
+        h("div", { class: "hcm-card-body" },
+          h("h3", {}, title),
+          h("div", { class: "hcm-meta" }, [typeLabel(g.type), year].filter(Boolean).join(" · ")),
+          h("div", { class: "hcm-sub" }, g.links.map((l) => l.text).slice(0, 3).join(" · ") || director))));
+    });
+
+    // Paginación
+    const pag = $(".PAGINATION", table);
+    main.append(toolbar, grid);
+    if (pag) main.append(compactPagination(pag));
+    return true;
+  }
+
+  // Paginación compacta: ‹ 1 … 4 5 [6] 7 8 … 1460 › + "Ir a"
+  function compactPagination(pag) {
+    const links = $$("a", pag);
+    const cur = Number(txt($("span", pag))) || 1;
+    const tpl = links.map((a) => a.getAttribute("href")).find((u) => /page=\d+/.test(u));
+    if (!tpl) { pag.classList.add("hcm-pagination"); return pag; }
+    const nums = links.map((a) => Number((a.getAttribute("href").match(/page=(\d+)/) || [])[1])).filter(Boolean);
+    const last = Math.max(cur, ...nums);
+    const url = (n) => tpl.replace(/page=\d+/, "page=" + n);
+    const out = h("nav", { class: "hcm-pagination" });
+    if (cur > 1) out.append(h("a", { href: url(cur - 1), class: "hcm-pg-nav" }, "‹ Anterior"));
+    const set = new Set([1, last]);
+    for (let i = cur - 2; i <= cur + 2; i++) if (i >= 1 && i <= last) set.add(i);
+    let prev = 0;
+    [...set].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) out.append(h("em", {}, "…"));
+      out.append(n === cur ? h("span", {}, String(n)) : h("a", { href: url(n) }, String(n)));
+      prev = n;
+    });
+    if (cur < last) out.append(h("a", { href: url(cur + 1), class: "hcm-pg-nav" }, "Siguiente ›"));
+    out.append(h("form", { class: "hcm-pg-go", onsubmit: (e) => {
+      e.preventDefault();
+      const n = Math.min(last, Math.max(1, parseInt(e.target.p.value, 10) || 0));
+      if (n) location.href = url(n);
+    } }, h("input", { name: "p", type: "number", min: 1, max: last, placeholder: "Ir a…", title: `Página (1-${last})` })));
+    return out;
+  }
+
+  function pageTitle() {
+    const p = new URLSearchParams(location.search);
+    if (p.get("q")) return `Resultados para «${p.get("q")}»`;
+    if (p.get("genre")) {
+      const a = $(`.EXPAND a[href*="genre=${p.get("genre")}&"], .EXPAND a[href$="genre=${p.get("genre")}"]`);
+      if (a) return txt(a.closest("div[id^='EXP_']")?.querySelector("span")) + " · " + txt(a);
+    }
+    if (p.get("director")) return "Director: " + p.get("director");
+    if (p.get("actor")) return "Reparto: " + p.get("actor");
+    if (!p.get("view")) return "Novedades";
+    return "";
+  }
+
+  // ------------------------------------------------------------ ficha de título
+  function buildTitle() {
+    const cover = $("td.L2 > img", center);
+    const r2 = $("td.R2", center);
+    if (!cover || !r2) return false;
+    const detailWin = cover.closest(".WIN1_CONTAINER");
+
+    const h1 = $("h1", r2);
+    const year = txt($("small", h1)).replace(/[()]/g, "");
+    const title = txt(h1).replace(txt($("small", h1)), "").trim();
+    const info = infoMap(r2);
+    const g = parseGenre(info["Género"]);
+
+    // Secciones "Etiqueta:" seguidas de un p.TEXT (Resumen, Reparto, Clasificación)
+    const blocks = {};
+    $$("p.INFO", r2).forEach((p) => {
+      const label = txt($("strong", p)).replace(/:$/, "");
+      if (txt(p).replace(/:$/, "") === label) {
+        let n = p.nextElementSibling;
+        if (n && n.matches("p.TEXT")) blocks[label] = n;
+      }
+    });
+
+    // Puntuaciones
+    const stars = $("#STARS_CONTAINER", r2);
+    const scores = stars ? $$(".SEP", stars).map((s) => ({ label: txt($("small", s)).replace(/^Puntuación\s*/i, ""), value: ratingOf(s) })) : [];
+    const votes = stars ? txt($$(":scope > small", stars).pop()) : "";
+    const voteBtn = stars ? $("a.BUTTON", stars) : null;
+
+    const extLinks = $$("td.L2 a", center).map((a) =>
+      h("a", { class: "hcm-chip hcm-ext", href: a.href, target: "_blank", rel: "noopener" },
+        /imdb/i.test(a.href) ? "IMDb ↗" : /filmaffinity/i.test(a.href) ? "FilmAffinity ↗" : txt(a)));
+
+    const facts = [
+      ["Título original", txt(infoContent(info["Título original"]))],
+      ["Director", infoContent(info["Director"])],
+      ["Duración", txt(infoContent(info["Duración"])).replace(/\.$/, "")]
+    ].filter(([, v]) => v && (typeof v === "string" ? v : txt(v)));
+
+    // Reparto: muestra los primeros y permite desplegar el resto
+    let cast = null;
+    if (blocks["Reparto"]) {
+      const people = $$("a", blocks["Reparto"]).map((a) => h("a", { href: a.getAttribute("href") }, txt(a)));
+      const MAX = 8;
+      const list = h("div", { class: "hcm-cast" }, people.slice(0, MAX));
+      if (people.length > MAX) {
+        const more = h("button", { type: "button", class: "hcm-link-btn",
+          onclick: () => { list.append(...people.slice(MAX)); more.remove(); } }, `+${people.length - MAX} más`);
+        list.append(more);
+      }
+      cast = h("div", { class: "hcm-block" }, h("h4", {}, "Reparto"), list);
+    }
+
+    const ageImg = $("img[src*='mpa_']", r2);
+    const age = ageImg ? h("img", { class: "hcm-age", src: ageImg.src, title: txt(blocks["Clasificación por edad"]) }) : null;
+
+    const hero = h("section", { class: "hcm-hero" },
+      h("div", { class: "hcm-hero-bg" }),
+      h("div", { class: "hcm-hero-inner" },
+        h("div", { class: "hcm-hero-cover" }, h("img", { src: cover.getAttribute("src"), alt: title })),
+        h("div", { class: "hcm-hero-info" },
+          h("div", { class: "hcm-eyebrow" }, [typeLabel(g.type), year].filter(Boolean).join(" · "), age),
+          h("h1", { class: "hcm-title" }, title),
+          h("div", { class: "hcm-scores" },
+            scores.map((s) => h("div", { class: "hcm-score " + ratingClass(+s.value) },
+              h("b", {}, s.value ?? "–"), h("span", {}, s.label))),
+            votes ? h("span", { class: "hcm-votes" }, votes) : null,
+            voteBtn),
+          g.links.length ? h("div", { class: "hcm-chips" }, g.links.map((l) => h("a", { class: "hcm-chip", href: l.href }, l.text))) : null,
+          facts.length ? h("dl", { class: "hcm-facts" }, facts.map(([k, v]) => [h("dt", {}, k), h("dd", {}, typeof v === "string" ? v : v.childNodes.length ? [...v.childNodes] : txt(v))])) : null,
+          blocks["Resumen"] ? h("p", { class: "hcm-plot" }, txt(blocks["Resumen"])) : null,
+          cast,
+          extLinks.length ? h("div", { class: "hcm-chips" }, extLinks) : null)));
+    hero.querySelector(".hcm-hero-bg").style.backgroundImage = `url("${cover.src}")`;
+
+    main.append(hero);
+
+    // Descargas (elinks) y comentarios: se mueven los bloques originales
+    const wins = $$(".WIN1_CONTAINER", center).filter((w) => w !== detailWin && !w.closest("#COMMENTS_CONTAINER"));
+    wins.forEach((w) => {
+      const th = txt($("th", w));
+      const isLinks = /elinks/i.test(th);
+      const sec = h("section", { class: "hcm-section" + (isLinks ? " hcm-elinks" : "") },
+        h("h2", { class: "hcm-h2" }, isLinks ? "Descargas" : th));
+      sec.append(w);
+      main.append(sec);
+    });
+    const comments = $("#COMMENTS_CONTAINER");
+    if (comments) main.append(h("section", { class: "hcm-section hcm-comments" }, comments));
+
+    // la ficha original se queda oculta (algunos scripts actualizan #STARS_CONTAINER)
+    detailWin.classList.add("hcm-hidden");
+    main.append(detailWin);
+    document.title = `${title}${year ? " (" + year + ")" : ""} · HispaShare`;
+    return true;
+  }
+
+  // ------------------------------------------------------------ montaje
+  try {
+    const { bar, advPanel } = buildTopbar();
+    root.append(bar);
+    if (advPanel) root.append(advPanel);
+
+    const ok = buildTitle() || buildList();
+    if (!ok) {
+      // Otras páginas (noticias, perfil, búsqueda avanzada…): contenido original con estilo
+      main.classList.add("hcm-generic");
+      [...center.childNodes].forEach((n) => main.append(n));
+    }
+    root.append(main, h("footer", { class: "hcm-footer" }, "HispaShare · con UIspa"));
+    document.body.append(root);
+    html.classList.remove("hcm-loading");
+  } catch (e) {
+    console.error("[UIspa] Error en el rediseño:", e);
+    html.classList.remove("hcm", "hcm-loading");
+  }
+})();
