@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "UIspa",
-  "version": "1.3.0",
-  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex.",
+  "version": "1.5.0",
+  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex o Jellyfin.",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/icon16.png",
@@ -61,7 +61,7 @@
       ],
       "js": [
         "content.js",
-        "plex.js"
+        "media.js"
       ],
       "run_at": "document_idle"
     }

@@ -10,15 +10,20 @@
   <h1 id="title"><span>UI</span>spa · Ajustes</h1>
 
   <section>
-    <h2>Conexión con Plex</h2>
-    <p class="muted">Si lo configuras, cada ficha de Hispashare te dirá qué episodios o películas ya tienes en tu servidor Plex. Es opcional: sin configurarlo, la extensión funciona igual.</p>
+    <h2>Servidor multimedia</h2>
+    <p class="muted">Si lo configuras, cada ficha de Hispashare te dirá qué episodios o películas ya tienes, y en qué versión. Puedes conectar Plex, Jellyfin o los dos a la vez. Es opcional: sin configurarlo, la extensión funciona igual.</p>
+
+    <div class="tabs" role="radiogroup" aria-label="Servidor que estás configurando">
+      <label class="tab"><input type="radio" name="server" value="plex" checked> Plex <span class="dot" data-dot="plex" title="Sin configurar"></span></label>
+      <label class="tab"><input type="radio" name="server" value="jellyfin"> Jellyfin <span class="dot" data-dot="jellyfin" title="Sin configurar"></span></label>
+    </div>
 
     <label for="url">Dirección del servidor</label>
-    <input id="url" type="url" placeholder="http://192.168.1.50:32400" autocomplete="off" spellcheck="false">
+    <input id="url" type="url" autocomplete="off" spellcheck="false">
 
-    <label for="token">Token de Plex</label>
+    <label for="token" id="tokenLabel">Token de Plex</label>
     <div class="row">
-      <input id="token" type="password" placeholder="xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+      <input id="token" type="password" autocomplete="off" spellcheck="false">
       <button id="show" type="button" class="ghost" title="Mostrar u ocultar">👁</button>
     </div>
 
@@ -29,14 +34,21 @@
     </div>
     <div id="status" role="status"></div>
 
-    <details>
-      <summary>¿Dónde encuentro la dirección y el token?</summary>
+    <details data-for="plex">
+      <summary>¿Dónde encuentro la dirección y el token de Plex?</summary>
       <ol>
-        <li><b>Dirección:</b> la IP del ordenador o NAS donde corre Plex con el puerto <code>32400</code>, por ejemplo <code>http://192.168.1.50:32400</code>. Fuera de casa necesitarás una dirección accesible desde fuera.</li>
+        <li><b>Dirección:</b> la IP del ordenador o NAS donde corre Plex con el puerto <code>32400</code>, por ejemplo <code>http://192.168.1.50:32400</code>.</li>
         <li><b>Token:</b> abre Plex en el navegador, entra en cualquier película o episodio, pulsa <b>⋯ → Obtener información → Ver XML</b>. En la dirección de la página que se abre, copia lo que va después de <code>X-Plex-Token=</code>.</li>
       </ol>
-      <p class="muted">El token se guarda solo en este navegador y únicamente se envía a tu servidor Plex, nunca a Hispashare ni a ningún otro sitio. Da acceso a tu servidor: no lo compartas.</p>
     </details>
+    <details data-for="jellyfin" hidden>
+      <summary>¿Dónde encuentro la dirección y la clave de Jellyfin?</summary>
+      <ol>
+        <li><b>Dirección:</b> la misma con la que abres Jellyfin en el navegador, normalmente con el puerto <code>8096</code>, por ejemplo <code>http://192.168.1.50:8096</code>.</li>
+        <li><b>Clave de API:</b> en Jellyfin entra con una cuenta de administrador y ve a <b>Panel de control → Claves de API</b> (en algunas versiones, <b>Avanzado → Claves de API</b>). Pulsa <b>+</b>, ponle de nombre «UIspa» y copia la clave que se crea.</li>
+      </ol>
+    </details>
+    <p class="muted small">Las credenciales se guardan solo en este navegador y únicamente se envían a tu servidor, nunca a Hispashare ni a ningún otro sitio. Dan acceso a tu servidor: no las compartas.</p>
   </section>
 </main>
 <script src="options.js"></script>

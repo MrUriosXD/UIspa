@@ -1,7 +1,7 @@
 // UIspa · service worker: menús contextuales, atajos, botón de la barra y
 // copia al portapapeles mediante un documento offscreen (en Manifest V3 el
 // service worker no tiene acceso al portapapeles).
-importScripts("plex-bg.js");
+importScripts("plex-bg.js", "jellyfin-bg.js", "media-bg.js");
 
 const PATTERNS = [
   "*://hispashare.org/*", "*://*.hispashare.org/*",

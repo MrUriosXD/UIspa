@@ -160,7 +160,7 @@
     return h("a", { href: "#", class: "hcm-settings-link", onclick: (e) => {
       e.preventDefault();
       ext.runtime.sendMessage({ action: "open-options" });
-    } }, "⚙ Ajustes de la extensión (Plex)");
+    } }, "⚙ Ajustes de la extensión (Plex / Jellyfin)");
   }
 
   // Desplegables: abrir con clic, cerrar al hacer clic fuera

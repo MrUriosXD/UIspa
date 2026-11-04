@@ -41,3 +41,10 @@ a.hc-site-btn { cursor: pointer; }
 .hc-plex-same { background: rgba(229,160,13,.18); color: #e5a00d; border: 1px solid #e5a00d; padding: 0 7px; }
 .hc-plex-other { background: transparent; color: #e5a00d; border: 1px dashed rgba(229,160,13,.7); padding: 0 7px; }
 .hc-btnbar { margin: 10px 0 2px; display: flex; flex-wrap: wrap; gap: 6px; }
+/* Jellyfin: mismo esquema en su color morado */
+.hc-plex-yes.hc-srv-jellyfin { background: #aa5cc3; color: #fff; }
+.hc-plex-same.hc-srv-jellyfin { background: rgba(170,92,195,.18); color: #c99ad9; border-color: #aa5cc3; }
+.hc-plex-other.hc-srv-jellyfin { color: #c99ad9; border-color: rgba(170,92,195,.75); }
+.hc-plex-part.hc-srv-jellyfin { background: rgba(170,92,195,.15); color: #c99ad9; border-color: rgba(170,92,195,.5); }
+.hc-plex-herobox { margin: 6px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.hc-plex-herobox .hc-plex { margin-left: 0; }
