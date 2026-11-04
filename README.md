@@ -1,6 +1,6 @@
 # UIspa
 
-Extensión para Chrome que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
+Extensión para **Chrome** y **Firefox** que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
 
 > Proyecto no oficial. No tiene relación con Hispashare: solo cambia cómo se ve la web en tu navegador y no aloja ni distribuye ningún contenido.
 
@@ -30,14 +30,26 @@ Extensión para Chrome que da a [Hispashare](https://www.hispashare.org) un dise
 
 ## Instalación
 
-1. Descarga este repositorio: botón **Code → Download ZIP**, y descomprímelo.
+Descarga la última versión desde **[Releases](https://github.com/ahhhv/UIspa/releases/latest)**.
+
+### Firefox
+
+1. Descarga `UIspa-firefox.xpi`.
+2. Arrástralo a una ventana de Firefox, o abre `about:addons` → rueda dentada ⚙ → **Instalar complemento desde archivo** y elígelo.
+3. Pulsa **Añadir**.
+
+La extensión está firmada por Mozilla y **se actualiza sola** cuando se publica una versión nueva. Requiere Firefox 140 o posterior.
+
+### Chrome y navegadores basados en Chromium
+
+1. Descarga `UIspa-chrome.zip` y descomprímelo. Obtendrás una carpeta `UIspa`.
 2. Abre `chrome://extensions`.
 3. Activa el **Modo de desarrollador** (arriba a la derecha).
-4. Pulsa **Cargar descomprimida** y elige la carpeta descomprimida, la que contiene `manifest.json`.
+4. Pulsa **Cargar descomprimida** y elige la carpeta `UIspa`, la que contiene `manifest.json`.
 
-Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas. Para actualizar, sustituye los archivos por los nuevos y pulsa ↻ en `chrome://extensions`.
+Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas. Para actualizar, descarga la nueva versión, sustituye el contenido de la carpeta y pulsa ↻ en `chrome://extensions`. Funciona en Chrome 116 o posterior, Edge, Brave, Opera y Vivaldi.
 
-Funciona en Chrome 116 o posterior y en otros navegadores basados en Chromium (Edge, Brave, Opera, Vivaldi).
+> **¿Tenías la versión 1.x de Chrome?** Antes la extensión estaba en la raíz del repositorio y ahora está en la carpeta `chrome/`. Quita la antigua en `chrome://extensions` y carga la nueva como se indica arriba. Tendrás que volver a configurar Plex o Jellyfin.
 
 ## Conectar con Plex o Jellyfin
 
@@ -46,11 +58,11 @@ Funciona en Chrome 116 o posterior y en otros navegadores basados en Chromium (E
 3. Pega la credencial:
    - **Plex:** tu token. En Plex Web abre cualquier película o episodio → **⋯ → Obtener información → Ver XML** y copia lo que va después de `X-Plex-Token=` en la dirección.
    - **Jellyfin:** una clave de API. Con una cuenta de administrador ve a **Panel de control → Claves de API**, pulsa **+** y copia la clave.
-4. Pulsa **Guardar**. Chrome te pedirá permiso para acceder solo a esa dirección.
+4. Pulsa **Guardar**. El navegador te pedirá permiso para acceder solo a esa dirección.
 
 ## Privacidad
 
-- UIspa no recoge ni envía datos a ningún servidor propio ni de terceros.
+- UIspa no recoge ni envía datos a ningún servidor propio ni de terceros. En Firefox lo declara así en su instalación (`data_collection_permissions: none`).
 - Solo se comunica con Hispashare, para obtener los enlaces que ya ofrece la web, y con tu servidor Plex o Jellyfin si lo configuras.
 - La dirección y la credencial del servidor se guardan únicamente en tu navegador. Las consultas salen de la extensión, no de la página, así que la web nunca las ve. Del servidor solo se usan el tamaño y la resolución de los archivos, nunca sus rutas.
 
@@ -59,22 +71,30 @@ Funciona en Chrome 116 o posterior y en otros navegadores basados en Chromium (E
 | Permiso | Para qué |
 |---|---|
 | Acceso a `hispashare.org` / `hispashare.com` | Aplicar el rediseño y añadir los botones |
-| `clipboardWrite`, `offscreen` | Copiar enlaces al portapapeles, también desde atajos y menús |
+| `clipboardWrite` (y `offscreen` en Chrome) | Copiar enlaces al portapapeles, también desde atajos y menús |
 | `contextMenus` | Opciones del menú del botón derecho |
 | `storage` | Guardar la configuración del servidor |
 | Acceso opcional a la dirección de tu servidor | Solo se pide si configuras Plex o Jellyfin, y únicamente para esa dirección |
 
 ## Estructura
 
+```
+chrome/        Extensión para Chrome (Manifest V3)
+firefox/       Extensión para Firefox (Manifest V2, firmada por Mozilla)
+updates.json   Aviso de actualizaciones para Firefox
+```
+
+Las dos versiones comparten el mismo código; solo cambian el manifiesto y el segundo plano:
+
 | Archivo | Función |
 |---|---|
-| `manifest.json` | Definición de la extensión (Manifest V3) |
+| `manifest.json` | Definición de la extensión |
 | `theme-early.js`, `theme.js`, `theme.css` | Rediseño de la web |
 | `content.js`, `content.css` | Botones de copiar y avisos |
 | `media.js` | Marcas de Plex o Jellyfin en las fichas |
 | `background.js` | Segundo plano: atajos y menús |
 | `media-bg.js`, `plex-bg.js`, `jellyfin-bg.js` | Consultas al servidor multimedia |
-| `offscreen.html`, `offscreen.js` | Copia al portapapeles desde segundo plano |
+| `offscreen.html`, `offscreen.js` | Solo Chrome: copia al portapapeles desde segundo plano |
 | `options.html`, `options.js`, `options.css` | Página de ajustes |
 
 ## Limitaciones

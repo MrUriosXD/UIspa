@@ -1,0 +1,114 @@
+{
+  "manifest_version": 2,
+  "name": "UIspa",
+  "version": "2.0.0",
+  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex o Jellyfin.",
+  "icons": {
+    "48": "icons/icon48.png",
+    "96": "icons/icon96.png"
+  },
+  "permissions": [
+    "clipboardWrite",
+    "contextMenus",
+    "activeTab",
+    "*://*.hispashare.org/*",
+    "*://*.hispashare.com/*",
+    "storage"
+  ],
+  "background": {
+    "scripts": [
+      "plex-bg.js",
+      "jellyfin-bg.js",
+      "media-bg.js",
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "theme-early.js"
+      ],
+      "css": [
+        "theme.css",
+        "content.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "theme.js"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://hispashare.org/*",
+        "*://*.hispashare.org/*",
+        "*://hispashare.com/*",
+        "*://*.hispashare.com/*"
+      ],
+      "js": [
+        "content.js",
+        "media.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "copy-all": {
+      "suggested_key": {
+        "default": "Alt+Shift+C"
+      },
+      "description": "Copiar todos los enlaces ed2k de la página"
+    },
+    "copy-selected": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Copiar los capítulos marcados"
+    }
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    },
+    "default_title": "UIspa: copiar todos los enlaces de la página"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "uispa@uispa",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      },
+      "update_url": "https://raw.githubusercontent.com/ahhhv/UIspa/main/updates.json"
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "optional_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "homepage_url": "https://github.com/ahhhv/UIspa"
+}

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UIspa",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex o Jellyfin.",
   "minimum_chrome_version": "116",
   "icons": {
@@ -94,5 +94,6 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
-  }
+  },
+  "homepage_url": "https://github.com/ahhhv/UIspa"
 }
