@@ -18,6 +18,7 @@ Extensión para **Chrome** y **Firefox** que da a [Hispashare](https://www.hispa
 - «Copiar seleccionados» y «Copiar todos» en cada versión de una serie; «Copiar enlace» en las películas.
 - Botón «Copiar» en la ventana de enlaces de la propia web.
 - Atajos: `Alt+Shift+C` copia todos los enlaces de la página y `Alt+Shift+S` los capítulos marcados. También desde el menú del botón derecho o el icono de la barra.
+- Los atajos se pueden cambiar en `chrome://extensions/shortcuts` (Chrome) o en `about:addons` → rueda dentada ⚙ → **Gestionar atajos de teclado de extensiones** (Firefox).
 
 **Plex o Jellyfin (opcional)**
 - En cada ficha marca qué episodios o películas tienes ya en tu servidor Plex, en Jellyfin o en los dos a la vez (una marca por servidor, en su color).
@@ -53,7 +54,10 @@ Chrome carga la extensión desde esa carpeta, así que no la borres ni la muevas
 
 ## Conectar con Plex o Jellyfin
 
-1. En Hispashare abre **Más → ⚙ Ajustes de la extensión**, o clic derecho en el icono de UIspa → **Opciones**.
+1. Abre los ajustes de UIspa de cualquiera de estas formas:
+   - En Hispashare, menú **Más → ⚙ Ajustes de la extensión**.
+   - **Chrome:** clic derecho en el icono de UIspa → **Opciones**.
+   - **Firefox:** `about:addons` → UIspa → pestaña **Opciones**.
 2. Elige la pestaña **Plex** o **Jellyfin** (puedes configurar los dos; un punto verde indica los conectados) y escribe la dirección de tu servidor, por ejemplo `http://192.168.1.50:32400` (Plex) o `http://192.168.1.50:8096` (Jellyfin).
 3. Pega la credencial:
    - **Plex:** tu token. En Plex Web abre cualquier película o episodio → **⋯ → Obtener información → Ver XML** y copia lo que va después de `X-Plex-Token=` en la dirección.
@@ -101,6 +105,35 @@ Las dos versiones comparten el mismo código; solo cambian el manifiesto y el se
 
 - Depende del HTML de Hispashare: si la web cambia su estructura, el rediseño o los botones pueden dejar de funcionar.
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
+
+## Novedades
+
+**2.0.0**
+- Primera versión pública para Firefox, firmada por Mozilla y con actualizaciones automáticas.
+- Chrome y Firefox en el mismo repositorio (`chrome/` y `firefox/`).
+- Plex y Jellyfin a la vez, con una marca por servidor.
+
+**1.x** (solo Chrome)
+- Rediseño de Hispashare y botones para copiar enlaces ed2k.
+- Integración con Plex y Jellyfin, distinguiendo qué versión tienes.
+- Soporte para fichas de películas.
+
+## Desarrollo
+
+Para probar cambios sin empaquetar:
+
+- **Chrome:** `chrome://extensions` → **Modo de desarrollador** → **Cargar descomprimida** → carpeta `chrome/`. Tras cada cambio, pulsa ↻.
+- **Firefox:** `about:debugging` → **Este Firefox** → **Cargar complemento temporal** → archivo `firefox/manifest.json`. Se quita al cerrar Firefox.
+
+El código común (rediseño, botones y marcas) es idéntico en las dos carpetas: si cambias algo, cópialo a ambas.
+
+### Publicar una versión nueva
+
+1. Sube el número de versión en `chrome/manifest.json` y `firefox/manifest.json`.
+2. Empaqueta Firefox: comprime el **contenido** de `firefox/` (no la carpeta) en un `.xpi`. Súbelo a firmar en [addons.mozilla.org](https://addons.mozilla.org/developers/) → UIspa → **Upload a New Version**, y descarga el firmado.
+3. Empaqueta Chrome: comprime la carpeta `chrome/` renombrada a `UIspa` como `UIspa-chrome.zip`.
+4. Crea una Release con la etiqueta `vX.Y.Z` y adjunta `UIspa-chrome.zip` y el firmado renombrado a `UIspa-firefox.xpi`.
+5. Añade la versión a `updates.json`, con el enlace a esa Release. Hasta que no lo hagas, Firefox no la instalará automáticamente.
 
 ## Licencia
 
