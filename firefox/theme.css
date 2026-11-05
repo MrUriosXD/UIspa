@@ -283,8 +283,11 @@ html.hcm .POP_WIN small, html.hcm .POP_WIN a:not(.BUTTON) { color: var(--muted) 
 #hcm-enable {
   position: fixed; right: 16px; bottom: 16px; z-index: 2147483000;
   font: 600 13px system-ui, sans-serif; padding: 8px 14px; border-radius: 999px; cursor: pointer;
-  background: var(--surface); color: var(--accent); border: 1px solid var(--accent); box-shadow: 0 6px 18px var(--shadow);
+  /* sin el rediseño no existen las variables de color: valores fijos */
+  background: #171a21; color: #f5b301; border: 1px solid #f5b301; box-shadow: 0 6px 18px rgba(0,0,0,.3);
+  line-height: 1.2; letter-spacing: normal; text-shadow: none; margin: 0;
 }
+#hcm-enable:hover { background: #f5b301; color: #1a1400; }
 
 /* ---------------------------------------------------------- responsive */
 /* Menús en una segunda fila cuando no caben junto al buscador
