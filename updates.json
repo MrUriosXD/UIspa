@@ -3,18 +3,6 @@
     "uispa@uispa": {
       "updates": [
         {
-          "version": "2.0.0",
-          "update_link": "https://github.com/ahhhv/UIspa/releases/download/2.0.0/UIspa-firefox.xpi"
-        },
-        {
-          "version": "2.2.0",
-          "update_link": "https://github.com/ahhhv/UIspa/releases/download/2.2.0/UIspa-firefox.xpi"
-        },
-        {
-          "version": "2.2.1",
-          "update_link": "https://github.com/ahhhv/UIspa/releases/download/2.2.1/UIspa-firefox.xpi"
-        },
-        {
           "version": "3.1.0",
           "update_link": "https://github.com/ahhhv/UIspa/releases/download/3.1.0/UIspa-firefox.xpi"
         }
