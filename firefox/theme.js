@@ -347,7 +347,11 @@
 
     main.append(hero);
 
-    // Descargas (elinks) y comentarios: se mueven los bloques originales
+    // Comentarios justo debajo de la ficha, como en la web original
+    const comments = $("#COMMENTS_CONTAINER");
+    if (comments) main.append(h("section", { class: "hcm-section hcm-comments" }, comments));
+
+    // Descargas (elinks) y demás bloques: se mueven los originales
     const wins = $$(".WIN1_CONTAINER", center).filter((w) => w !== detailWin && !w.closest("#COMMENTS_CONTAINER"));
     wins.forEach((w) => {
       const th = txt($("th", w));
@@ -357,8 +361,6 @@
       sec.append(w);
       main.append(sec);
     });
-    const comments = $("#COMMENTS_CONTAINER");
-    if (comments) main.append(h("section", { class: "hcm-section hcm-comments" }, comments));
 
     // la ficha original se queda oculta (algunos scripts actualizan #STARS_CONTAINER)
     detailWin.classList.add("hcm-hidden");

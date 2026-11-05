@@ -157,6 +157,7 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 **2.2.1**
 - Portada más limpia: al pasar el ratón por una carátula ya no aparecen la sinopsis ni las calidades.
 - Las notas de cada versión (temporada, montaje, reescalado…) se ven en un recuadro en lugar del globo ovalado.
+- En la ficha, los comentarios vuelven a estar justo debajo de la información principal, como en la web original.
 
 **2.2.0**
 - Al enviar al NAS puedes explorar sus carpetas y elegir el destino (requiere permiso de File Station para el usuario).
