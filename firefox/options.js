@@ -216,3 +216,20 @@ api.storage.local.get(["server", "plexUrl", "plexToken", "jfUrl", "jfKey"]).then
     if (s.dsUrl && s.dsUser && s.dsPass) dsSay("Download Station configurado. Puedes probar la conexión cuando quieras.", "ok");
   });
 }
+
+// ------------------------------------------------------------ apariencia
+const LOOK_DEFAULT = { theme: "dark", size: "m", infinite: true };
+async function loadLook() {
+  const { look } = await api.storage.local.get("look");
+  const l = { ...LOOK_DEFAULT, ...(look || {}) };
+  $("lookTheme").value = l.theme;
+  $("lookSize").value = l.size;
+  $("lookInfinite").checked = !!l.infinite;
+}
+async function saveLook() {
+  const look = { theme: $("lookTheme").value, size: $("lookSize").value, infinite: $("lookInfinite").checked };
+  await api.storage.local.set({ look });
+  $("lookStatus").textContent = "Guardado. Se aplica al momento en las pestañas de Hispashare abiertas.";
+}
+for (const id of ["lookTheme", "lookSize", "lookInfinite"]) $(id).addEventListener("change", saveLook);
+loadLook();

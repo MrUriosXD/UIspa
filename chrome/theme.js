@@ -73,6 +73,39 @@
   }
   const typeLabel = (t) => ({ "Películas": "Película", "Series": "Serie", "Documentales": "Documental", "Música": "Música" }[t] || t);
 
+  // ------------------------------------------------------------ apariencia
+  // Tema (oscuro / claro / automático), tamaño de carátulas y scroll infinito.
+  // Se guardan en la extensión y una copia en localStorage para aplicarlos
+  // antes de pintar (theme-early.js).
+  const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+  const LOOK_DEFAULT = { theme: "dark", size: "m", infinite: true };
+  let look = { ...LOOK_DEFAULT };
+  try { look = { ...look, ...JSON.parse(localStorage.getItem("uispa-look") || "{}") }; } catch (_) {}
+  const lightQuery = window.matchMedia ? matchMedia("(prefers-color-scheme: light)") : null;
+  const lookListeners = [];
+  function applyLook(next) {
+    const prev = look;
+    look = { ...LOOK_DEFAULT, ...next };
+    const light = look.theme === "light" || (look.theme === "auto" && !!lightQuery?.matches);
+    html.classList.toggle("hcm-light", light);
+    html.dataset.hcmSize = look.size;
+    try { localStorage.setItem("uispa-look", JSON.stringify(look)); } catch (_) {}
+    lookListeners.forEach((fn) => fn(look, prev));
+  }
+  function saveLook(patch) {
+    const next = { ...look, ...patch };
+    applyLook(next);
+    try { ext?.storage?.local.set({ look: next }); } catch (_) {}
+  }
+  applyLook(look);
+  lightQuery?.addEventListener?.("change", () => look.theme === "auto" && applyLook(look));
+  try {
+    ext?.storage?.local.get("look").then?.((r) => { if (r?.look) applyLook(r.look); }, () => {});
+    ext?.storage?.onChanged?.addListener((changes, area) => {
+      if (area === "local" && changes.look?.newValue) applyLook(changes.look.newValue);
+    });
+  } catch (_) {}
+
   // ------------------------------------------------------------ estructura base
   const container = $(".CONTAINER");
   const center = $(".CENTER");
@@ -149,10 +182,7 @@
       }
     }
 
-    const classic = h("button", {
-      type: "button", class: "hcm-icon-btn", title: "Volver al diseño original",
-      onclick: () => { try { localStorage.setItem("hcm-off", "1"); } catch (_) {} location.reload(); }
-    }, "◐");
+    const classic = lookMenu();
 
     const bar = h("header", { class: "hcm-top" },
       h("div", { class: "hcm-top-inner" },
@@ -162,6 +192,46 @@
           h("div", { class: "hcm-dd-menu" }, menuLinks, openSettings()))),
         h("div", { class: "hcm-top-right" }, search, advBtn, account, classic)));
     return { bar, advPanel };
+  }
+
+  // Icono ◐ dibujado (el carácter no existe en todas las fuentes)
+  function halfCircle() {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("width", "16"); svg.setAttribute("height", "16");
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", "8"); c.setAttribute("cy", "8"); c.setAttribute("r", "6.5");
+    c.setAttribute("fill", "none"); c.setAttribute("stroke", "currentColor"); c.setAttribute("stroke-width", "1.5");
+    const half = document.createElementNS(NS, "path");
+    half.setAttribute("d", "M8 1.5a6.5 6.5 0 0 1 0 13z"); half.setAttribute("fill", "currentColor");
+    svg.append(c, half);
+    return svg;
+  }
+
+  // Menú ◐ de la barra: tema, tamaño de carátulas, scroll infinito y diseño original
+  function lookMenu() {
+    const opt = (key, value, label) => h("button", { type: "button", class: "hcm-seg-btn", "data-key": key, "data-value": value,
+      onclick: (e) => { e.stopPropagation(); saveLook({ [key]: value }); } }, label);
+    const scroll = h("input", { type: "checkbox", onchange: (e) => saveLook({ infinite: e.target.checked }) });
+    const menu = h("div", { class: "hcm-dd-menu hcm-look" },
+      h("div", { class: "hcm-look-label" }, "Tema"),
+      h("div", { class: "hcm-seg" }, opt("theme", "dark", "Oscuro"), opt("theme", "light", "Claro"), opt("theme", "auto", "Automático")),
+      h("div", { class: "hcm-look-label" }, "Carátulas"),
+      h("div", { class: "hcm-seg" }, opt("size", "s", "Pequeñas"), opt("size", "m", "Medianas"), opt("size", "l", "Grandes")),
+      h("label", { class: "hcm-look-check", onclick: (e) => e.stopPropagation() }, scroll, " Cargar más títulos al bajar"),
+      h("a", { href: "#", class: "hcm-look-classic", onclick: (e) => {
+        e.preventDefault();
+        try { localStorage.setItem("hcm-off", "1"); } catch (_) {}
+        location.reload();
+      } }, "Volver al diseño original"));
+    const sync = () => {
+      $$(".hcm-seg-btn", menu).forEach((b) => b.classList.toggle("hcm-on", look[b.dataset.key] === b.dataset.value));
+      scroll.checked = !!look.infinite;
+    };
+    lookListeners.push(sync);
+    sync();
+    return h("div", { class: "hcm-dd hcm-dd-right" },
+      h("button", { type: "button", class: "hcm-dd-btn hcm-look-btn", title: "Apariencia", "aria-label": "Apariencia" }, halfCircle()), menu);
   }
 
   // Enlace a los ajustes de la extensión (conexión con Plex)
@@ -183,7 +253,7 @@
 
   // ------------------------------------------------------------ listado (portada, búsquedas)
   function buildList() {
-    const rows = $$("tr", center).filter((tr) => $("td.L1 a[href*='view=title'] img", tr) && $("td.R1 h1", tr));
+    const rows = listRows(center);
     if (!rows.length) return false;
     const table = rows[0].closest("table");
 
@@ -195,38 +265,102 @@
       sortForm);
 
     const grid = h("div", { class: "hcm-grid" });
-    rows.forEach((tr) => {
-      const a = $("td.R1 h1 a", tr);
-      const href = a.getAttribute("href");
-      const smallTxt = txt($("small", a));
-      const title = txt(a).replace(smallTxt, "").trim();
-      const meta = smallTxt.replace(/^\(|\)$/g, "");
-      const yearM = meta.match(/(\d{4})\s*$/);
-      const year = yearM ? yearM[1] : "";
-      const director = meta.replace(/,?\s*\d{4}\s*$/, "").trim();
-      const rating = ratingOf($(".STARS_CONTAINER", tr));
-      const info = infoMap(tr);
-      const g = parseGenre(info["Género"]);
-      const last = txt(infoContent(info["Última publicación"]));
-      const isNew = /^hoy|^ayer/i.test(last);
-      const img = $("td.L1 img", tr);
-
-      grid.append(h("a", { class: "hcm-card", href, title: `${title}${year ? " (" + year + ")" : ""}` },
-        h("div", { class: "hcm-poster" },
-          h("img", { src: img.getAttribute("src"), alt: title, loading: "lazy" }),
-          rating ? h("span", { class: "hcm-rating " + ratingClass(+rating) }, "★ " + rating) : null,
-          isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null),
-        h("div", { class: "hcm-card-body" },
-          h("h3", {}, title),
-          h("div", { class: "hcm-meta" }, [typeLabel(g.type), year].filter(Boolean).join(" · ")),
-          h("div", { class: "hcm-sub" }, g.links.map((l) => l.text).slice(0, 3).join(" · ") || director))));
-    });
+    rows.forEach((tr) => grid.append(card(tr)));
 
     // Paginación
     const pag = $(".PAGINATION", table);
     main.append(toolbar, grid);
-    if (pag) main.append(compactPagination(pag));
+    const pager = pag ? compactPagination(pag) : null;
+    if (pager) main.append(pager);
+    if (pag) infiniteScroll(grid, pag, pager);
     return true;
+  }
+
+  // Filas de un listado (portada, búsqueda…) dentro de un documento
+  const listRows = (doc) => $$("tr", doc).filter((tr) => $("td.L1 a[href*='view=title'] img", tr) && $("td.R1 h1", tr));
+
+  function card(tr) {
+    const a = $("td.R1 h1 a", tr);
+    const href = a.getAttribute("href");
+    const smallTxt = txt($("small", a));
+    const title = txt(a).replace(smallTxt, "").trim();
+    const meta = smallTxt.replace(/^\(|\)$/g, "");
+    const yearM = meta.match(/(\d{4})\s*$/);
+    const year = yearM ? yearM[1] : "";
+    const director = meta.replace(/,?\s*\d{4}\s*$/, "").trim();
+    const rating = ratingOf($(".STARS_CONTAINER", tr));
+    const info = infoMap(tr);
+    const g = parseGenre(info["Género"]);
+    const last = txt(infoContent(info["Última publicación"]));
+    const isNew = /^hoy|^ayer/i.test(last);
+    const img = $("td.L1 img", tr);
+
+    return h("a", { class: "hcm-card", href, title: `${title}${year ? " (" + year + ")" : ""}` },
+      h("div", { class: "hcm-poster" },
+        h("img", { src: img.getAttribute("src"), alt: title, loading: "lazy" }),
+        rating ? h("span", { class: "hcm-rating " + ratingClass(+rating) }, "★ " + rating) : null,
+        isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null),
+      h("div", { class: "hcm-card-body" },
+        h("h3", {}, title),
+        h("div", { class: "hcm-meta" }, [typeLabel(g.type), year].filter(Boolean).join(" · ")),
+        h("div", { class: "hcm-sub" }, g.links.map((l) => l.text).slice(0, 3).join(" · ") || director)));
+  }
+
+  // Scroll infinito: al llegar al final se pide la página siguiente y se
+  // añaden sus títulos. La paginación se queda debajo por si se desactiva.
+  function nextPageUrl(pag) {
+    const cur = Number(txt($("span", pag))) || 1;
+    const a = $$("a", pag).find((x) => Number((x.getAttribute("href").match(/page=(\d+)/) || [])[1]) === cur + 1);
+    return a ? new URL(a.getAttribute("href"), location.href).href : null;
+  }
+  function infiniteScroll(grid, pag, pager) {
+    let next = nextPageUrl(pag);
+    let busy = false, page = Number(txt($("span", pag))) || 1;
+    const seen = new Set($$(".hcm-card", grid).map((c) => c.getAttribute("href")));
+    const status = h("div", { class: "hcm-more", role: "status" });
+    const sentinel = h("div", { class: "hcm-sentinel" });
+    grid.after(status, sentinel);
+    const update = () => {
+      const on = !!look.infinite && !!next;
+      if (pager) pager.hidden = !!look.infinite && !!next;
+      status.hidden = !look.infinite;
+      if (!look.infinite) return;
+      if (!next) status.textContent = page > 1 ? "No hay más títulos" : "";
+      if (on) io.observe(sentinel); else io.unobserve(sentinel);
+    };
+    async function load() {
+      if (busy || !next || !look.infinite) return;
+      busy = true;
+      status.textContent = "Cargando más títulos…";
+      try {
+        const res = await fetch(next, { credentials: "include" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+        const rows = listRows(doc);
+        for (const tr of rows) {
+          const c = card(tr);
+          if (seen.has(c.getAttribute("href"))) continue;
+          seen.add(c.getAttribute("href"));
+          grid.append(c);
+        }
+        const p2 = $(".PAGINATION", doc);
+        page++;
+        next = rows.length && p2 ? nextPageUrl(p2) : null;
+        status.textContent = next ? "" : "No hay más títulos";
+      } catch (e) {
+        status.textContent = "";
+        status.append("No se pudieron cargar más títulos. ", h("a", { href: "#", onclick: (ev) => { ev.preventDefault(); load(); } }, "Reintentar"));
+        busy = false;
+        return;
+      }
+      busy = false;
+      update();
+      // si la página aún no llena la pantalla, se sigue cargando
+      if (next && sentinel.getBoundingClientRect().top < innerHeight + 600) load();
+    }
+    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) load(); }, { rootMargin: "800px 0px" });
+    lookListeners.push(update);
+    update();
   }
 
   // Paginación compacta: ‹ 1 … 4 5 [6] 7 8 … 1460 › + "Ir a"
@@ -360,6 +494,9 @@
         h("h2", { class: "hcm-h2" }, isLinks ? "Descargas" : th));
       sec.append(w);
       main.append(sec);
+      if (isLinks) {
+        try { organiseVersions(sec, w); } catch (e) { console.error("[UIspa] versiones:", e); }
+      }
     });
 
     // la ficha original se queda oculta (algunos scripts actualizan #STARS_CONTAINER)
@@ -367,6 +504,141 @@
     main.append(detailWin);
     document.title = `${title}${year ? " (" + year + ")" : ""} · HispaShare`;
     return true;
+  }
+
+  // ------------------------------------------------------------ versiones (ficha)
+  // Cada versión (WEBRip 1080p, WEB-DL…) se muestra plegada con un resumen
+  // (archivos, tamaño total, calidad, ripeador, fecha) y se abre al hacer
+  // clic. En series con varias temporadas, pestañas para filtrar por temporada.
+  const GiB = 1024 ** 3;
+  function sizeBytes(t) {
+    const m = (t || "").replace(/\s+/g, " ").match(/([\d.,]+)\s*([KMGT])B/i);
+    if (!m) return 0;
+    return parseFloat(m[1].replace(/\./g, "").replace(",", ".")) * 1024 ** { K: 1, M: 2, G: 3, T: 4 }[m[2].toUpperCase()];
+  }
+  const fmtSize = (b) => b >= 1024 * GiB ? (b / 1024 / GiB).toFixed(2).replace(".", ",") + " TB"
+    : b >= GiB ? (b / GiB).toFixed(1).replace(".", ",") + " GB" : Math.round(b / 1024 ** 2) + " MB";
+  const seasonOf = (name) => {
+    const m = name.match(/\b(\d{1,2})x\d{1,3}\b/i) || name.match(/\bS(\d{1,2})\s*E\d{1,3}\b/i);
+    return m ? Number(m[1]) : null;
+  };
+  // "Ripper: thad91" … dentro de la tabla T3 de la versión
+  function versionFacts(td) {
+    const facts = {};
+    $$("table.T3 td", td).forEach((c) => {
+      const label = txt($("strong", c)).replace(/:$/, "");
+      if (label) facts[label] = txt(c).replace(/^[^:]*:\s*/, "");
+    });
+    return facts;
+  }
+
+  function organiseVersions(sec, win) {
+    const versions = $$("table.T1 > tbody > tr, table.T1 > tr", win)
+      .map((tr) => ({ tr, td: $(":scope > td", tr) }))
+      .filter((v) => v.td && $(":scope > h2", v.td) && !$(":scope > .hcm-ver-head", v.td));
+    if (!versions.length) return;
+
+    for (const v of versions) {
+      const files = $$("table.T2 tr", v.td).filter((r) => $("a[href*='Download(']", r));
+      v.files = files.length;
+      v.bytes = files.reduce((n, r) => n + sizeBytes(txt($("td.SIZE", r))), 0);
+      const seasons = new Set(files.map((r) => seasonOf(txt($("a[href*='Download(']", r)))).filter((x) => x != null));
+      if (!seasons.size) {
+        const m = txt($(".INFOMSG", v.td)).match(/Temporada\s+(\d+)/i);
+        if (m) seasons.add(Number(m[1]));
+      }
+      v.seasons = [...seasons];
+      v.title = txt($(":scope > h2", v.td));
+      v.facts = versionFacts(v.td);
+    }
+
+    // Solo se pliegan las versiones con varios archivos (series); las
+    // películas, con un archivo por versión, se dejan como están.
+    const foldable = versions.filter((v) => v.files > 1);
+    if (foldable.length < 2 && versions.every((v) => v.files <= 1)) return;
+
+    for (const v of foldable) {
+      const h2 = $(":scope > h2", v.td);
+      const body = h("div", { class: "hcm-ver-body" });
+      while (h2.nextSibling) body.append(h2.nextSibling);
+      const f = v.facts;
+      const date = (f["eLink puesto"] || "").replace(/\s*\(.*\)\s*$/, "");
+      const bits = [
+        `${v.files} archivos`,
+        v.bytes ? fmtSize(v.bytes) : null,
+        f["Calidad"] || null,
+        f["Ripper"] ? "por " + f["Ripper"] : null,
+        date || null
+      ].filter(Boolean);
+      const head = h("button", { type: "button", class: "hcm-ver-head", "aria-expanded": "false" },
+        h("span", { class: "hcm-ver-caret" }, "▸"),
+        h("span", { class: "hcm-ver-main" },
+          h("span", { class: "hcm-ver-title" }, v.title),
+          h("span", { class: "hcm-ver-meta" }, bits.join(" · "))),
+        h("span", { class: "hcm-ver-have" }));
+      // el h2 original se queda (oculto): media.js lee de él la calidad de la versión
+      h2.classList.add("hcm-hidden");
+      h2.after(head);
+      v.td.append(body);
+      v.head = head;
+      v.body = body;
+      v.td.classList.add("hcm-ver");
+      head.addEventListener("click", () => setOpen(v, !v.open, true));
+    }
+    function setOpen(v, open, byUser) {
+      if (!v.head) return;
+      v.open = open;
+      if (byUser) v.touched = true;
+      v.td.classList.toggle("hcm-ver-open", open);
+      v.head.setAttribute("aria-expanded", String(open));
+      v.head.querySelector(".hcm-ver-caret").textContent = open ? "▾" : "▸";
+    }
+
+    // Pestañas por temporada (si hay versiones de dos o más temporadas)
+    const all = [...new Set(foldable.flatMap((v) => v.seasons))].sort((a, b) => a - b);
+    let tabs = null, current = "all";
+    const visible = (v) => current === "all" || !v.seasons.length || v.seasons.includes(current);
+    function show(which) {
+      current = which;
+      for (const v of versions) v.tr.hidden = !visible(v);
+      tabs?.querySelectorAll("button").forEach((b) => b.classList.toggle("hcm-on", String(current) === b.dataset.s));
+      const shown = foldable.filter(visible);
+      if (shown.length === 1 && !shown[0].touched) setOpen(shown[0], true);
+    }
+    if (all.length >= 2) {
+      tabs = h("div", { class: "hcm-seasons", role: "tablist" },
+        all.map((n) => h("button", { type: "button", "data-s": String(n), onclick: () => show(n) }, `Temporada ${n}`)),
+        h("button", { type: "button", "data-s": "all", onclick: () => show("all") }, "Todas"));
+      $(".hcm-h2", sec).after(tabs);
+      show(all[0]);
+    } else {
+      show("all");
+    }
+
+    // Resumen de lo que tienes en Plex / Jellyfin (lo marca media.js)
+    function haveSummary() {
+      for (const v of foldable) {
+        const rows = $$("table.T2 tr", v.body).filter((r) => $("a[href*='Download(']", r));
+        const missing = rows.filter((r) => r.dataset.uispaMissing === "1").length;
+        const box = v.head.querySelector(".hcm-ver-have");
+        box.textContent = "";
+        box.className = "hcm-ver-have";
+        if (!missing) { box.textContent = "✓ Tienes todos"; box.classList.add("hcm-have-all"); }
+        else if (missing === rows.length) { box.textContent = "No la tienes"; box.classList.add("hcm-have-none"); }
+        else { box.textContent = `Te faltan ${missing}`; box.classList.add("hcm-have-some"); }
+      }
+      // en las pestañas, un punto si en esa temporada falta algo
+      tabs?.querySelectorAll("button[data-s]").forEach((b) => {
+        if (b.dataset.s === "all") return;
+        const n = Number(b.dataset.s);
+        const eps = foldable.filter((v) => v.seasons.includes(n));
+        const anyMissing = eps.some((v) => $$("tr[data-uispa-missing='1']", v.body).length);
+        b.classList.toggle("hcm-missing", !!anyMissing);
+        b.title = anyMissing ? "Te faltan capítulos de esta temporada" : "";
+      });
+    }
+    document.addEventListener("uispa-media", haveSummary);
+    if (html.dataset.uispaMedia) haveSummary();
   }
 
   // ------------------------------------------------------------ montaje

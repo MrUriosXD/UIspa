@@ -96,3 +96,20 @@ html.hcm a.BUTTON.hc-site-btn.hc-nas { background: rgba(80,150,255,.12) !importa
 .hc-nas-newbox { display: flex; gap: 6px; padding: 6px; border-top: 1px solid #262b36; }
 .hc-nas-newbox input { flex: 1; margin-top: 0 !important; }
 .hc-nas-newbox button { border-radius: 8px; padding: 4px 12px; font-size: 13px; }
+.hc-site-btn[hidden] { display: none !important; }
+
+/* tema claro de UIspa */
+html.hcm-light .hc-nas-pop { background: #fff; color: #1c1f26; border-color: #dcdfe5; box-shadow: 0 16px 40px rgba(0,0,0,.18); }
+html.hcm-light .hc-nas-pop label, html.hcm-light .hc-nas-pop .hc-nas-up { color: #5f6878; }
+html.hcm-light .hc-nas-pop input, html.hcm-light .hc-nas-pop button { background: #eef0f3; color: #1c1f26; border-color: #dcdfe5; }
+html.hcm-light .hc-nas-list { background: #f7f8fa; border-color: #dcdfe5; }
+html.hcm-light .hc-nas-pop .hc-nas-item, html.hcm-light .hc-nas-pop .hc-nas-crumb { background: none; }
+html.hcm-light .hc-nas-pop .hc-nas-item:hover, html.hcm-light .hc-nas-pop .hc-nas-crumb:hover { background: #e6effc; color: #1f5fbf; }
+html.hcm-light .hc-nas-pop .hc-nas-crumb, html.hcm-light .hc-nas-pop .hc-nas-new { color: #1f5fbf; }
+html.hcm-light .hc-nas-pop .hc-nas-ok { background: #2f74e0; border-color: #2f74e0; color: #fff; }
+html.hcm-light .hc-nas-newbox, html.hcm-light .hc-nas-pop .hc-nas-new { border-color: #dcdfe5; }
+html.hcm-light .hc-nas-note { color: #9a6700; }
+html.hcm-light a.BUTTON.hc-site-btn.hc-nas { background: rgba(47,116,224,.08) !important; border-color: rgba(47,116,224,.45); color: #1f5fbf !important; }
+html.hcm-light .hc-plex-no { color: #5f6878; border-color: #9aa3b4; }
+html.hcm-light .hc-plex-same, html.hcm-light .hc-plex-other, html.hcm-light .hc-plex-part { color: #9a6200; }
+html.hcm-light .hc-plex-same.hc-srv-jellyfin, html.hcm-light .hc-plex-other.hc-srv-jellyfin, html.hcm-light .hc-plex-part.hc-srv-jellyfin { color: #8a3fa6; }

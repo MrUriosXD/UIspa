@@ -7,11 +7,13 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
 ## Qué hace
 
 **Rediseño**
-- Tema oscuro con una barra superior compacta: buscador, géneros, «Popular» y tu cuenta.
-- Portada y búsquedas en cuadrícula de carátulas grandes, con nota, tipo, año y géneros.
-- Ficha de cada título con la carátula grande, notas de IMDb y usuarios, ficha técnica, sinopsis y reparto.
-- Paginación compacta, diseño adaptable a pantallas pequeñas y texto ampliado.
-- Botón ◐ para volver al diseño original cuando quieras.
+- Tema oscuro, claro o automático (como el sistema), con una barra superior compacta: buscador, géneros, «Popular» y tu cuenta.
+- Portada y búsquedas en cuadrícula de carátulas, con nota, tipo, año y géneros. Las carátulas pueden ser pequeñas, medianas o grandes.
+- Scroll infinito: al llegar al final se cargan más títulos sin cambiar de página (se puede desactivar y volver a la paginación).
+- Ficha de cada título con la carátula grande, notas de IMDb y usuarios, ficha técnica, sinopsis y reparto, y los comentarios justo debajo.
+- Descargas ordenadas: cada versión aparece plegada con un resumen (archivos, tamaño total, calidad, ripeador y fecha) y se abre con un clic. En series con varias temporadas, pestañas para ver solo una.
+- Diseño adaptable a pantallas pequeñas y texto ampliado.
+- Botón ◐ de la barra: tema, tamaño de carátulas, scroll infinito y volver al diseño original.
 
 **Copiar enlaces**
 - Botón 📋 junto a cada capítulo o archivo.
@@ -32,6 +34,7 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
   - **En Plex en 4K**: lo tienes en otra calidad.
   - **Falta**: no lo tienes.
 - Busca cada título por su código de IMDb y, si no, por título y año.
+- **Lo que te falta:** en cada versión de una serie, «📋 Copiar los que faltan» y «📥 Al NAS (faltan N)» copian o envían solo los capítulos que no tienes en ningún servidor. El resumen de cada versión indica si la tienes entera o cuántos te faltan, y las pestañas de temporada marcan con un punto las incompletas.
 
 ## Instalación
 
@@ -154,6 +157,12 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
 
 ## Novedades
+
+**3.0.0**
+- «Lo que te falta»: copiar o enviar al NAS solo los capítulos que no tienes en Plex o Jellyfin.
+- Versiones plegables con resumen y pestañas por temporada en las fichas de series.
+- Scroll infinito en la portada y las búsquedas.
+- Tema claro y automático, y tres tamaños de carátula, desde el botón ◐ o los ajustes.
 
 **2.2.2**
 - Crear carpetas en el NAS desde el explorador al enviar (＋ Nueva carpeta).

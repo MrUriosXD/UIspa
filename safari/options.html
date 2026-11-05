@@ -10,6 +10,31 @@
   <h1 id="title"><span>UI</span>spa · Ajustes</h1>
 
   <section>
+    <h2>Apariencia</h2>
+    <p class="muted">También puedes cambiarlo en Hispashare desde el botón ◐ de la barra superior.</p>
+    <div class="cols">
+      <div>
+        <label for="lookTheme">Tema</label>
+        <select id="lookTheme">
+          <option value="dark">Oscuro</option>
+          <option value="light">Claro</option>
+          <option value="auto">Automático (como el sistema)</option>
+        </select>
+      </div>
+      <div>
+        <label for="lookSize">Tamaño de las carátulas</label>
+        <select id="lookSize">
+          <option value="s">Pequeñas</option>
+          <option value="m">Medianas</option>
+          <option value="l">Grandes</option>
+        </select>
+      </div>
+    </div>
+    <label class="check"><input id="lookInfinite" type="checkbox"> Cargar más títulos al llegar al final de la página (scroll infinito)</label>
+    <div id="lookStatus" role="status" class="muted small"></div>
+  </section>
+
+  <section>
     <h2>Servidor multimedia</h2>
     <p class="muted">Si lo configuras, cada ficha de Hispashare te dirá qué episodios o películas ya tienes, y en qué versión. Puedes conectar Plex, Jellyfin o los dos a la vez. Es opcional: sin configurarlo, la extensión funciona igual.</p>
 

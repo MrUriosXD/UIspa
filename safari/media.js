@@ -205,8 +205,13 @@
       } else if (vs.some(({ v }) => v && v.kind === "missing")) {
         const names = answered.map((p) => p.res.server).join(" ni en ");
         r.link.parentElement.append(badge("hc-plex-no", "Falta", `No está en ${names}`));
+        // capítulo que no tienes en ningún servidor: lo usan «Copiar / Al NAS los que faltan»
+        if (r.ep && r.row) r.row.dataset.uispaMissing = "1";
       }
     });
+    // Avisa al resto de UIspa (botones «los que faltan», resumen de versiones)
+    document.documentElement.dataset.uispaMedia = "1";
+    document.dispatchEvent(new CustomEvent("uispa-media"));
   }
 
   run();

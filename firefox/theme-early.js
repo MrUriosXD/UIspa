@@ -14,6 +14,13 @@
   try { off = localStorage.getItem("hcm-off") === "1"; } catch (_) {}
   if (off) return;
   document.documentElement.classList.add("hcm", "hcm-loading");
+  // Tema y tamaño de carátulas guardados (copia en localStorage para que no parpadee)
+  try {
+    const look = JSON.parse(localStorage.getItem("uispa-look") || "{}");
+    const light = look.theme === "light" || (look.theme === "auto" && matchMedia("(prefers-color-scheme: light)").matches);
+    if (light) document.documentElement.classList.add("hcm-light");
+    if (look.size) document.documentElement.dataset.hcmSize = look.size;
+  } catch (_) {}
   // Red de seguridad: si el rediseño falla, se vuelve a mostrar la web original.
   setTimeout(() => {
     if (!document.getElementById("hcm-root")) document.documentElement.classList.remove("hcm", "hcm-loading");

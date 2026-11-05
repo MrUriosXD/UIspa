@@ -118,6 +118,14 @@
   }
   const maskAll = (n) => "1".repeat(n);
   const isChecked = (g, i) => !!document.getElementById(`elink_${g.id}_${i}`)?.checked;
+  // Capítulos que no están en ningún servidor (los marca media.js)
+  const isMissing = (g, i) => g.rows.some((r) => r.i === i && r.tr?.dataset.uispaMissing === "1");
+  function maskMissing(g) {
+    let m = "";
+    for (let i = 0; i < g.count; i++) m += isMissing(g, i) ? "1" : "0";
+    return m;
+  }
+  const countMissing = (g) => g.rows.filter((r) => r.tr?.dataset.uispaMissing === "1").length;
   function maskSelected(g) {
     let m = "";
     for (let i = 0; i < g.count; i++) m += isChecked(g, i) ? "1" : "0";
@@ -142,17 +150,22 @@
   }
   const prefetch = (g) => getAll(g).promise.catch(() => {});
 
-  // kind: "all" | "sel" | número de fila
+  const maskFor = (g, kind) => kind === "sel" ? maskSelected(g) : kind === "missing" ? maskMissing(g)
+    : kind === "all" ? maskAll(g.count) : "0".repeat(kind) + "1" + "0".repeat(g.count - kind - 1);
+
+  // kind: "all" | "sel" | "missing" | número de fila
   function pick(g, links, kind) {
     if (kind === "all") return links;
     if (links.length !== g.count) return null; // no se puede mapear por posición
     if (kind === "sel") return links.filter((_, i) => isChecked(g, i));
+    if (kind === "missing") return links.filter((_, i) => isMissing(g, i));
     return links[kind] ? [links[kind]] : [];
   }
 
   function copyGroup(g, btn, kind, label, onOk) {
     if (btn.dataset.busy) return;
     if (kind === "sel" && !maskSelected(g).includes("1")) { toast("Marca algún capítulo primero", true); return; }
+    if (kind === "missing" && !countMissing(g)) { toast("No te falta ningún capítulo de esta versión"); return; }
     const c = getAll(g);
     const sel = c.links && pick(g, c.links, kind);
     if (sel) {
@@ -168,8 +181,7 @@
         await c.promise;
         let links = pick(g, c.links, kind);
         if (!links) {
-          const mask = kind === "sel" ? maskSelected(g) : "0".repeat(kind) + "1" + "0".repeat(g.count - kind - 1);
-          links = await fetchLinks(g.id, mask);
+          links = await fetchLinks(g.id, maskFor(g, kind));
         }
         if (await copyLinks(links, label, true)) onOk?.();
       } catch (e) {
@@ -425,6 +437,7 @@
   async function sendToNas(g, btn, kind) {
     if (btn.dataset.busy) return;
     if (kind === "sel" && !maskSelected(g).includes("1")) { toast("Marca algún capítulo primero", true); return; }
+    if (kind === "missing" && !countMissing(g)) { toast("No te falta ningún capítulo de esta versión"); return; }
     prefetch(g); // los enlaces se van pidiendo mientras eliges carpeta
     const dest = await pickFolder(btn);
     if (dest === null) return;
@@ -434,8 +447,7 @@
       await c.promise;
       let links = pick(g, c.links, kind);
       if (!links) {
-        const mask = kind === "sel" ? maskSelected(g) : kind === "all" ? maskAll(g.count) : "0".repeat(kind) + "1" + "0".repeat(g.count - kind - 1);
-        links = await fetchLinks(g.id, mask);
+        links = await fetchLinks(g.id, maskFor(g, kind));
       }
       if (!links.length) { toast("No se han encontrado enlaces", true); return; }
       const r = await api.runtime.sendMessage({ action: "ds-add", links, dest });
@@ -463,7 +475,8 @@
       ? makeSiteButton("📥 Enviar al NAS", "Enviar a Download Station", (b) => sendToNas(g, b, "all"))
       : makeSiteButton("📥 Al NAS (todos)", "Enviar todos los enlaces de esta versión a Download Station", (b) => sendToNas(g, b, "all")));
     buttons.forEach((b) => b.classList.add("hc-nas"));
-    ui.last.after(...buttons.flatMap((b) => [document.createTextNode(" "), b]));
+    (ui.missingCopy || ui.last).after(...buttons.flatMap((b) => [document.createTextNode(" "), b]));
+    ui.lastNas = buttons[buttons.length - 1];
     for (const { i } of g.rows) {
       const copy = ui.rows.get(i);
       if (!copy) continue;
@@ -474,6 +487,39 @@
       b.textContent = "📥";
       b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); sendToNas(g, b, i); });
       copy.after(b);
+    }
+  }
+
+  // ---------------------------------------------------------------- lo que me falta
+  // Con Plex o Jellyfin configurados, cada versión de una serie tiene botones
+  // para copiar o mandar al NAS solo los capítulos que no tienes.
+  function enhanceMissing(g) {
+    const ui = uiByGroup.get(g.id);
+    if (!ui || g.count < 2) return;
+    const n = countMissing(g);
+    // si faltan todos, «todos» ya hace lo mismo
+    const useful = n > 0 && n < g.rows.length;
+    const warm = () => prefetch(g);
+    if (useful && !ui.missingCopy) {
+      ui.missingCopy = makeSiteButton("📋 Copiar los que faltan", "Copiar solo los capítulos que no tienes en tu servidor",
+        (b) => copyGroup(g, b, "missing", "los que faltan"));
+      ui.missingCopy.classList.add("hc-missing");
+      ui.missingCopy.addEventListener("pointerenter", warm);
+      ui.last.after(document.createTextNode(" "), ui.missingCopy);
+    }
+    if (useful && nasOn && ui.lastNas && !ui.missingNas) {
+      ui.missingNas = makeSiteButton("📥 Al NAS (los que faltan)", "Enviar a Download Station solo los capítulos que no tienes",
+        (b) => sendToNas(g, b, "missing"));
+      ui.missingNas.classList.add("hc-nas", "hc-missing");
+      ui.missingNas.addEventListener("pointerenter", warm);
+      ui.lastNas.after(document.createTextNode(" "), ui.missingNas);
+    }
+    const labels = [[ui.missingCopy, `📋 Copiar los que faltan (${n})`], [ui.missingNas, `📥 Al NAS (faltan ${n})`]];
+    for (const [b, label] of labels) {
+      if (!b) continue;
+      b.hidden = !useful;
+      const c = b.querySelector(".C");
+      if (c && useful) c.textContent = label;
     }
   }
 
@@ -523,7 +569,7 @@
 
   // ---------------------------------------------------------------- arranque
   function scan() {
-    findGroups().forEach((g) => { enhanceGroup(g); enhanceNas(g); });
+    findGroups().forEach((g) => { enhanceGroup(g); enhanceNas(g); enhanceMissing(g); });
     enhancePopup();
   }
   scan();
@@ -533,6 +579,7 @@
       if (r?.configured) { nasOn = true; scan(); }
     }, () => {});
   } catch (_) { /* sin segundo plano: nada que hacer */ }
+  document.addEventListener("uispa-media", () => scan());
   let pending;
   new MutationObserver(() => {
     clearTimeout(pending);
