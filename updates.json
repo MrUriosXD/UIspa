@@ -9,6 +9,10 @@
         {
           "version": "2.2.0",
           "update_link": "https://github.com/ahhhv/UIspa/releases/download/2.2.0/UIspa-firefox.xpi"
+        },
+        {
+          "version": "2.2.1",
+          "update_link": "https://github.com/ahhhv/UIspa/releases/download/2.2.1/UIspa-firefox.xpi"
         }
       ]
     }
