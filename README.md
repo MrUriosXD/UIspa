@@ -8,7 +8,7 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
 
 **Rediseño**
 - Tema oscuro con una barra superior compacta: buscador, géneros, «Popular» y tu cuenta.
-- Portada y búsquedas en cuadrícula de carátulas grandes, con nota, tipo, año y géneros. Al pasar el ratón se ve la sinopsis.
+- Portada y búsquedas en cuadrícula de carátulas grandes, con nota, tipo, año y géneros.
 - Ficha de cada título con la carátula grande, notas de IMDb y usuarios, ficha técnica, sinopsis y reparto.
 - Paginación compacta, diseño adaptable a pantallas pequeñas y texto ampliado.
 - Botón ◐ para volver al diseño original cuando quieras.
@@ -153,6 +153,10 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
 
 ## Novedades
+
+**2.2.1**
+- Portada más limpia: al pasar el ratón por una carátula ya no aparecen la sinopsis ni las calidades.
+- Las notas de cada versión (temporada, montaje, reescalado…) se ven en un recuadro en lugar del globo ovalado.
 
 **2.2.0**
 - Al enviar al NAS puedes explorar sus carpetas y elegir el destino (requiere permiso de File Station para el usuario).

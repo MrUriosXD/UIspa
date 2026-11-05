@@ -138,15 +138,6 @@ html.hcm .hcm-rating.hcm-good { color: #7ee787; }
 html.hcm .hcm-rating.hcm-mid { color: #f2cc60; }
 html.hcm .hcm-rating.hcm-low { color: #ff9a92; }
 html.hcm .hcm-new { right: 8px; background: var(--accent); color: var(--accent-ink); text-transform: capitalize; }
-html.hcm .hcm-hover {
-  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;
-  padding: 14px; font-size: 12.5px; line-height: 1.45; color: #f0f0f0;
-  background: linear-gradient(to top, rgba(0,0,0,.95) 15%, rgba(0,0,0,.6) 60%, transparent);
-  opacity: 0; transition: opacity .2s;
-}
-html.hcm .hcm-hover p { margin: 0; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
-html.hcm .hcm-hover-q { color: var(--accent); font-weight: 600; font-size: 11.5px; }
-html.hcm .hcm-card:hover .hcm-hover { opacity: 1; }
 html.hcm .hcm-card-body h3 { margin: 0; font-size: 15px; font-weight: 650; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 html.hcm .hcm-card:hover h3 { color: var(--accent); }
 html.hcm .hcm-meta, html.hcm .hcm-sub { color: var(--muted); font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -217,9 +208,11 @@ html.hcm .hcm-elinks table.T1 > tbody > tr > td {
 }
 html.hcm .hcm-elinks h2 { margin: 0 0 10px; font-size: 17px; font-weight: 700; color: var(--text); background: none !important; padding: 0 !important; border: 0 !important; }
 html.hcm .hcm-elinks .INFOMSG {
-  display: inline-block; margin: 0 0 12px !important; padding: 4px 12px 4px 12px !important;
-  border-radius: 999px; background: rgba(245,179,1,.12) !important; color: var(--accent);
-  border: 1px solid rgba(245,179,1,.35) !important; font-size: 13px; min-height: 0 !important;
+  display: block; width: fit-content !important; max-width: 100%; box-sizing: border-box;
+  margin: 0 0 12px !important; padding: 8px 14px !important; line-height: 1.5;
+  border-radius: 8px; background: rgba(245,179,1,.08) !important; color: var(--accent);
+  border: 0 !important; border-left: 3px solid var(--accent) !important;
+  font-size: 13px; min-height: 0 !important;
 }
 html.hcm .hcm-elinks td > div, html.hcm .hcm-elinks table.T3 { margin-left: 0 !important; width: 100% !important; }
 html.hcm .hcm-elinks td > br { display: none; }
@@ -320,7 +313,7 @@ html.hcm #hcm-root a { color: inherit; }
 html.hcm #hcm-root a:hover { color: var(--accent); }
 html.hcm .hcm-section table, html.hcm .hcm-section tr { background: none !important; border: 0 !important; }
 html.hcm .hcm-elinks h2 { color: var(--text) !important; }
-html.hcm .hcm-elinks .INFOMSG { width: auto !important; background-image: none !important; }
+html.hcm .hcm-elinks .INFOMSG { background-image: none !important; }
 html.hcm .hcm-elinks table.T2 a { color: var(--text) !important; }
 html.hcm .hcm-elinks table.T2 a:hover { color: var(--accent) !important; }
 html.hcm .hcm-elinks table.T3 a, html.hcm .hcm-facts a, html.hcm .hcm-cast a { color: var(--accent) !important; }

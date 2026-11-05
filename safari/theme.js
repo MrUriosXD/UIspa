@@ -205,10 +205,8 @@
       const year = yearM ? yearM[1] : "";
       const director = meta.replace(/,?\s*\d{4}\s*$/, "").trim();
       const rating = ratingOf($(".STARS_CONTAINER", tr));
-      const plot = txt($("p.TEXT", tr));
       const info = infoMap(tr);
       const g = parseGenre(info["Género"]);
-      const quality = txt(infoContent(info["Calidad"]));
       const last = txt(infoContent(info["Última publicación"]));
       const isNew = /^hoy|^ayer/i.test(last);
       const img = $("td.L1 img", tr);
@@ -217,10 +215,7 @@
         h("div", { class: "hcm-poster" },
           h("img", { src: img.getAttribute("src"), alt: title, loading: "lazy" }),
           rating ? h("span", { class: "hcm-rating " + ratingClass(+rating) }, "★ " + rating) : null,
-          isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null,
-          h("div", { class: "hcm-hover" },
-            plot ? h("p", {}, plot) : null,
-            quality ? h("div", { class: "hcm-hover-q" }, quality) : null)),
+          isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null),
         h("div", { class: "hcm-card-body" },
           h("h3", {}, title),
           h("div", { class: "hcm-meta" }, [typeLabel(g.type), year].filter(Boolean).join(" · ")),
