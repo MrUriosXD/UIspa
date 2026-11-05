@@ -81,6 +81,15 @@ Safari solo permite instalar de forma permanente extensiones firmadas con una cu
 
 Limitaciones en Safari: los botones de copiar funcionan igual que en los otros navegadores, pero los atajos de teclado y el menú del botón derecho pueden no copiar.
 
+## Apariencia
+
+Pulsa el botón ◐ de la barra superior de Hispashare (o ve a la sección **Apariencia** de los ajustes de UIspa) para elegir:
+
+- **Tema:** oscuro, claro o automático (sigue el de tu sistema).
+- **Carátulas:** pequeñas, medianas o grandes.
+- **Cargar más títulos al bajar:** scroll infinito en la portada y las búsquedas; si lo desactivas, vuelve la paginación.
+- **Volver al diseño original:** quita el rediseño; para recuperarlo, pulsa «✨ Vista moderna» abajo a la derecha.
+
 ## Conectar con Plex o Jellyfin
 
 1. Abre los ajustes de UIspa de cualquiera de estas formas:
@@ -124,7 +133,7 @@ Requiere DSM 7 con Download Station.
 | Acceso a `hispashare.org` / `hispashare.com` | Aplicar el rediseño y añadir los botones |
 | `clipboardWrite` (y `offscreen` en Chrome) | Copiar enlaces al portapapeles, también desde atajos y menús |
 | `contextMenus` | Opciones del menú del botón derecho |
-| `storage` | Guardar la configuración de los servidores |
+| `storage` | Guardar la configuración de los servidores y de la apariencia |
 | Acceso opcional a la dirección de tu servidor o NAS | Solo se pide si configuras Plex, Jellyfin o Synology, y únicamente para esa dirección |
 
 ## Estructura
@@ -142,8 +151,8 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 | Archivo | Función |
 |---|---|
 | `manifest.json` | Definición de la extensión |
-| `theme-early.js`, `theme.js`, `theme.css` | Rediseño de la web |
-| `content.js`, `content.css` | Botones de copiar y avisos |
+| `theme-early.js`, `theme.js`, `theme.css` | Rediseño de la web: apariencia, scroll infinito, versiones plegables y temporadas |
+| `content.js`, `content.css` | Botones de copiar y de enviar al NAS (también «los que faltan») y avisos |
 | `media.js` | Marcas de Plex o Jellyfin en las fichas |
 | `background.js` | Segundo plano: atajos y menús |
 | `media-bg.js`, `plex-bg.js`, `jellyfin-bg.js` | Consultas al servidor multimedia |
@@ -159,17 +168,15 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 ## Novedades
 
 **3.1.0**
-- Arreglado el botón «✨ Vista moderna», que se veía transparente en el diseño original.
+- **Lo que te falta:** en cada versión de una serie, «📋 Copiar los que faltan» y «📥 Al NAS (faltan N)» copian o envían solo los capítulos que no tienes en Plex ni en Jellyfin.
+- **Descargas ordenadas:** cada versión aparece plegada con un resumen (archivos, tamaño total, calidad, ripeador, fecha y si la tienes entera) y se abre con un clic. En series con varias temporadas, pestañas para ver solo una; las incompletas llevan un punto rojo.
+- **Scroll infinito** en la portada y las búsquedas (se puede desactivar).
+- **Tema claro y automático**, y carátulas pequeñas, medianas o grandes. Se elige en el nuevo menú ◐ de la barra o en la sección **Apariencia** de los ajustes.
+- **Crear carpetas en el NAS** desde el explorador al enviar (＋ Nueva carpeta).
+- Instrucciones del NAS: hay que iniciar sesión una vez en DSM con el usuario creado y elegir una carpeta por defecto en Download Station; si no, las descargas pueden quedarse en «Finalizando» o dar error.
+- Arreglado el botón «✨ Vista moderna» del diseño original, que se veía transparente.
 
-**3.0.0**
-- «Lo que te falta»: copiar o enviar al NAS solo los capítulos que no tienes en Plex o Jellyfin.
-- Versiones plegables con resumen y pestañas por temporada en las fichas de series.
-- Scroll infinito en la portada y las búsquedas.
-- Tema claro y automático, y tres tamaños de carátula, desde el botón ◐ o los ajustes.
-
-**2.2.2**
-- Crear carpetas en el NAS desde el explorador al enviar (＋ Nueva carpeta).
-- Instrucciones: hay que iniciar sesión una vez en DSM con el usuario creado y elegir una carpeta por defecto en Download Station.
+Las versiones 2.2.2 y 3.0.0 no se llegaron a publicar: sus cambios están incluidos aquí.
 
 **2.2.1**
 - Portada más limpia: al pasar el ratón por una carátula ya no aparecen la sinopsis ni las calidades.
@@ -210,10 +217,10 @@ El código común (rediseño, botones y marcas) es idéntico en las tres carpeta
 
 ### Publicar una versión nueva
 
-1. Sube el número de versión en `chrome/manifest.json` y `firefox/manifest.json`.
+1. Sube el número de versión en `chrome/manifest.json`, `firefox/manifest.json` y `safari/manifest.json`.
 2. Empaqueta Firefox: comprime el **contenido** de `firefox/` (no la carpeta) en un `.xpi`. Súbelo a firmar en [addons.mozilla.org](https://addons.mozilla.org/developers/) → UIspa → **Upload a New Version**, y descarga el firmado.
 3. Empaqueta Chrome: comprime la carpeta `chrome/` renombrada a `UIspa` como `UIspa-chrome.zip`.
-4. Crea una Release con la etiqueta `X.Y.Z` (sin «v», por ejemplo `2.1.0`) y adjunta `UIspa-chrome.zip` y el firmado renombrado a `UIspa-firefox.xpi`.
+4. Crea una Release con la etiqueta `X.Y.Z` (sin «v», por ejemplo `3.1.0`) y adjunta `UIspa-chrome.zip` y el firmado renombrado a `UIspa-firefox.xpi`.
 5. Añade la versión a `updates.json`, con el enlace a esa Release. Hasta que no lo hagas, Firefox no la instalará automáticamente.
 
 ## Licencia
