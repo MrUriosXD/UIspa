@@ -218,18 +218,25 @@ api.storage.local.get(["server", "plexUrl", "plexToken", "jfUrl", "jfKey"]).then
 }
 
 // ------------------------------------------------------------ apariencia
-const LOOK_DEFAULT = { theme: "dark", size: "m", infinite: true };
+const LOOK_DEFAULT = { theme: "dark", size: "m", titleSize: "m", infinite: true };
 async function loadLook() {
   const { look } = await api.storage.local.get("look");
   const l = { ...LOOK_DEFAULT, ...(look || {}) };
   $("lookTheme").value = l.theme;
   $("lookSize").value = l.size;
+  $("lookTitleSize").value = l.titleSize || "m";
   $("lookInfinite").checked = !!l.infinite;
 }
 async function saveLook() {
-  const look = { theme: $("lookTheme").value, size: $("lookSize").value, infinite: $("lookInfinite").checked };
+  const look = {
+    theme: $("lookTheme").value,
+    size: $("lookSize").value,
+    titleSize: $("lookTitleSize").value,
+    infinite: $("lookInfinite").checked
+  };
   await api.storage.local.set({ look });
+  try { localStorage.setItem("uispa-look", JSON.stringify(look)); } catch (_) {}
   $("lookStatus").textContent = "Guardado. Se aplica al momento en las pestañas de Hispashare abiertas.";
 }
-for (const id of ["lookTheme", "lookSize", "lookInfinite"]) $(id).addEventListener("change", saveLook);
+for (const id of ["lookTheme", "lookSize", "lookTitleSize", "lookInfinite"]) $(id).addEventListener("change", saveLook);
 loadLook();

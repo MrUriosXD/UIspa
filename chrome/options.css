@@ -36,8 +36,16 @@ code { background: var(--s2); padding: 1px 6px; border-radius: 4px; font-size: 1
 .dot.set { background: #3fb950; box-shadow: 0 0 0 2px rgba(63,185,80,.25); }
 .tab.on .dot:not(.set) { background: rgba(26,20,0,.35); }
 section + section { margin-top: 20px; }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
-@media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 14px; }
+@media (max-width: 560px) {
+  main { padding: 20px 14px 40px; }
+  section { padding: 16px; border-radius: 12px; }
+  .cols { grid-template-columns: 1fr; gap: 6px; }
+  .tabs { width: 100%; display: flex; }
+  .tab { flex: 1; text-align: center; }
+  .actions { flex-direction: column; }
+  .actions button { width: 100%; }
+}
 .opt { color: var(--muted); font-weight: 400; }
 #dsStatus { margin-top: 14px; font-size: 14px; min-height: 1.5em; }
 #dsStatus.ok { color: #7ee787; }

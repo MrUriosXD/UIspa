@@ -20,6 +20,7 @@
     const light = look.theme === "light" || (look.theme === "auto" && matchMedia("(prefers-color-scheme: light)").matches);
     if (light) document.documentElement.classList.add("hcm-light");
     if (look.size) document.documentElement.dataset.hcmSize = look.size;
+    if (look.titleSize) document.documentElement.dataset.hcmTitleSize = look.titleSize;
   } catch (_) {}
   // Red de seguridad: si el rediseño falla, se vuelve a mostrar la web original.
   setTimeout(() => {

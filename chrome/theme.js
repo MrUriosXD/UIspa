@@ -78,7 +78,7 @@
   // Se guardan en la extensión y una copia en localStorage para aplicarlos
   // antes de pintar (theme-early.js).
   const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
-  const LOOK_DEFAULT = { theme: "dark", size: "m", infinite: true };
+  const LOOK_DEFAULT = { theme: "dark", size: "m", titleSize: "m", infinite: true };
   let look = { ...LOOK_DEFAULT };
   try { look = { ...look, ...JSON.parse(localStorage.getItem("uispa-look") || "{}") }; } catch (_) {}
   const lightQuery = window.matchMedia ? matchMedia("(prefers-color-scheme: light)") : null;
@@ -88,7 +88,8 @@
     look = { ...LOOK_DEFAULT, ...next };
     const light = look.theme === "light" || (look.theme === "auto" && !!lightQuery?.matches);
     html.classList.toggle("hcm-light", light);
-    html.dataset.hcmSize = look.size;
+    html.dataset.hcmSize = look.size || "m";
+    html.dataset.hcmTitleSize = look.titleSize || "m";
     try { localStorage.setItem("uispa-look", JSON.stringify(look)); } catch (_) {}
     lookListeners.forEach((fn) => fn(look, prev));
   }
@@ -218,6 +219,8 @@
       h("div", { class: "hcm-seg" }, opt("theme", "dark", "Oscuro"), opt("theme", "light", "Claro"), opt("theme", "auto", "Automático")),
       h("div", { class: "hcm-look-label" }, "Carátulas"),
       h("div", { class: "hcm-seg" }, opt("size", "s", "Pequeñas"), opt("size", "m", "Medianas"), opt("size", "l", "Grandes")),
+      h("div", { class: "hcm-look-label" }, "Título y datos"),
+      h("div", { class: "hcm-seg" }, opt("titleSize", "s", "Pequeño"), opt("titleSize", "m", "Mediano"), opt("titleSize", "l", "Grande")),
       h("label", { class: "hcm-look-check", onclick: (e) => e.stopPropagation() }, scroll, " Cargar más títulos al bajar"),
       h("a", { href: "#", class: "hcm-look-classic", onclick: (e) => {
         e.preventDefault();
@@ -279,14 +282,32 @@
   // Filas de un listado (portada, búsqueda…) dentro de un documento
   const listRows = (doc) => $$("tr", doc).filter((tr) => $("td.L1 a[href*='view=title'] img", tr) && $("td.R1 h1", tr));
 
+  // Iconos SVG para diferenciar el tipo de contenido en cada tarjeta
+  const TYPE_ICONS = {
+    movie: "M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z",
+    series: "M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z",
+    doc: "M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z",
+    music: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
+  };
+
+  function typeSvg(type) {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", TYPE_ICONS[type] || TYPE_ICONS.movie);
+    svg.appendChild(path);
+    return svg;
+  }
+
   function card(tr) {
     const a = $("td.R1 h1 a", tr);
     const href = a.getAttribute("href");
     const smallTxt = txt($("small", a));
-    const title = txt(a).replace(smallTxt, "").trim();
+    let rawTitle = txt(a).replace(smallTxt, "").trim();
     const meta = smallTxt.replace(/^\(|\)$/g, "");
     const yearM = meta.match(/(\d{4})\s*$/);
-    const year = yearM ? yearM[1] : "";
+    let finalYear = yearM ? yearM[1] : "";
     const director = meta.replace(/,?\s*\d{4}\s*$/, "").trim();
     const rating = ratingOf($(".STARS_CONTAINER", tr));
     const info = infoMap(tr);
@@ -295,15 +316,91 @@
     const isNew = /^hoy|^ayer/i.test(last);
     const img = $("td.L1 img", tr);
 
-    return h("a", { class: "hcm-card", href, title: `${title}${year ? " (" + year + ")" : ""}` },
-      h("div", { class: "hcm-poster" },
-        h("img", { src: img.getAttribute("src"), alt: title, loading: "lazy" }),
-        rating ? h("span", { class: "hcm-rating " + ratingClass(+rating) }, "★ " + rating) : null,
-        isNew ? h("span", { class: "hcm-new" }, last.split(" ")[0]) : null),
-      h("div", { class: "hcm-card-body" },
-        h("h3", {}, title),
-        h("div", { class: "hcm-meta" }, [typeLabel(g.type), year].filter(Boolean).join(" · ")),
-        h("div", { class: "hcm-sub" }, g.links.map((l) => l.text).slice(0, 3).join(" · ") || director)));
+    // Si el año no está en el paréntesis del título, buscarlo en info o en el texto
+    if (!finalYear) {
+      const yearFromInfo = info["Año"] ? txt(infoContent(info["Año"])) : "";
+      const yearFromTitle = (rawTitle.match(/\b(19\d\d|20\d\d)\b/) || [])[0] || "";
+      finalYear = yearFromInfo || yearFromTitle;
+      if (yearFromTitle) rawTitle = rawTitle.replace(/\s*\((19\d\d|20\d\d)\)\s*$/, "").trim();
+    }
+
+    // Detección de etiqueta de temporada / miniserie / etc.
+    let tagStatus = null;
+    const seasonRegex = /\s*\((?:((?:\d+[ªº]?\s*)?Temp(?:oradas?)?[^)]*|Miniserie|Serie Completa|Completa|Parte\s*\d+[^)]*))\)\s*$/i;
+    const seasonMatch = rawTitle.match(seasonRegex);
+    if (seasonMatch) {
+      tagStatus = seasonMatch[1].trim();
+      rawTitle = rawTitle.replace(seasonRegex, "").trim();
+    } else {
+      const inTitleMatch = rawTitle.match(/\(([^)]*(?:Temp|Miniserie|Completa)[^)]*)\)/i);
+      if (inTitleMatch) {
+        tagStatus = inTitleMatch[1].trim();
+        rawTitle = rawTitle.replace(inTitleMatch[0], "").trim();
+      }
+    }
+    if (tagStatus) {
+      tagStatus = tagStatus
+        .replace(/Temporadas?\s*/i, "Temp. ")
+        .replace(/(\d+[ªº]?)\s*Temporada/i, "$1 Temp.");
+    }
+
+    // Clasificación del tipo: movie | series | doc | music
+    const fullText = (rawTitle + " " + (g.type || "") + " " + meta).toLowerCase();
+    const gType = (g.type || "").toLowerCase();
+    let type = "movie";
+    let typeText = "Película";
+
+    if (gType.includes("serie") || tagStatus || /temporada|episodio|\bcap[ií]tulo/i.test(fullText)) {
+      type = "series";
+      typeText = "Serie";
+    } else if (gType.includes("docu") || /documental/i.test(fullText)) {
+      type = "doc";
+      typeText = "Docu";
+    } else if (gType.includes("músic") || gType.includes("music") || /álbum|album|discograf/i.test(fullText)) {
+      type = "music";
+      typeText = "Música";
+    }
+
+    // Chips de género (hasta 2)
+    const genres = (g.links.length ? g.links : (director ? [{ text: director }] : []))
+      .slice(0, 2)
+      .map((l) => h("span", { class: "genre-chip" }, l.text));
+
+    const metaKids = [
+      h("span", { class: "type-pill" }, typeSvg(type), " " + typeText)
+    ];
+    if (finalYear) {
+      metaKids.push(h("span", { class: "dot" }, "•"), h("span", {}, finalYear));
+    }
+    if (tagStatus) {
+      metaKids.push(h("span", { class: "tag-status" }, tagStatus));
+    }
+
+    const overlayKids = [
+      h("h3", { class: "card-title" }, rawTitle),
+      h("div", { class: "card-meta" }, metaKids)
+    ];
+    if (genres.length) {
+      overlayKids.push(h("div", { class: "genres-list" }, genres));
+    }
+
+    const posterKids = [
+      h("img", { class: "poster-img", src: img.getAttribute("src"), alt: rawTitle, loading: "lazy" })
+    ];
+    if (rating) {
+      posterKids.push(h("div", { class: "badge badge-rating" + (ratingClass(+rating) ? " " + ratingClass(+rating) : "") }, "★ " + rating));
+    }
+    if (isNew) {
+      posterKids.push(h("div", { class: "badge badge-status" }, last.split(" ")[0].toLowerCase()));
+    }
+    posterKids.push(h("div", { class: "card-overlay" }, overlayKids));
+
+    return h("a", {
+      class: "hcm-card media-card",
+      href,
+      "data-type": type,
+      title: `${rawTitle}${finalYear ? " (" + finalYear + ")" : ""}`
+    }, h("div", { class: "poster-wrapper" }, posterKids));
   }
 
   // Scroll infinito: al llegar al final se pide la página siguiente y se
