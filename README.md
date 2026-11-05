@@ -158,6 +158,9 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 
 ## Novedades
 
+**3.1.0**
+- Arreglado el botón «✨ Vista moderna», que se veía transparente en el diseño original.
+
 **3.0.0**
 - «Lo que te falta»: copiar o enviar al NAS solo los capítulos que no tienes en Plex o Jellyfin.
 - Versiones plegables con resumen y pestañas por temporada en las fichas de series.
