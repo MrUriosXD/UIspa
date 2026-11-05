@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "UIspa",
-  "version": "2.0.0",
-  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en tu Plex o Jellyfin.",
+  "version": "2.1.0",
+  "description": "Rediseño limpio de Hispashare, copia cómoda de enlaces ed2k y aviso de lo que ya tienes en Plex o Jellyfin y envío a Synology Download Station.",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/icon16.png",

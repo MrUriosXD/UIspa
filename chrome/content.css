@@ -48,3 +48,29 @@ a.hc-site-btn { cursor: pointer; }
 .hc-plex-part.hc-srv-jellyfin { background: rgba(170,92,195,.15); color: #c99ad9; border-color: rgba(170,92,195,.5); }
 .hc-plex-herobox { margin: 6px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 .hc-plex-herobox .hc-plex { margin-left: 0; }
+/* Synology Download Station */
+html.hcm a.BUTTON.hc-site-btn.hc-nas { background: rgba(80,150,255,.12) !important; border-color: rgba(80,150,255,.45); color: #8ab8ff !important; }
+.hc-nas-btn { margin-left: 4px; }
+.hc-nas-pop {
+  position: fixed; z-index: 2147483647; width: 320px; box-sizing: border-box;
+  background: #171a21; color: #e8eaf0; border: 1px solid #2a2f3a; border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45); padding: 14px;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: left;
+}
+.hc-nas-pop * { box-sizing: border-box; }
+.hc-nas-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+.hc-nas-pop label { display: block; color: #9aa3b4; font-size: 12px; }
+.hc-nas-pop input {
+  display: block; width: 100%; margin-top: 4px; padding: 7px 10px; border-radius: 8px;
+  background: #1e222b; color: #e8eaf0; border: 1px solid #2a2f3a; font: inherit; font-size: 13px; outline: none;
+}
+.hc-nas-pop input:focus { border-color: #5096ff; }
+.hc-nas-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.hc-nas-pop button {
+  font: inherit; font-size: 12px; cursor: pointer; border-radius: 999px; padding: 3px 10px;
+  background: #1e222b; color: #e8eaf0; border: 1px solid #2a2f3a;
+}
+.hc-nas-pop button:hover { border-color: #5096ff; }
+.hc-nas-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
+.hc-nas-actions button { border-radius: 8px; padding: 6px 14px; font-size: 13px; }
+.hc-nas-pop .hc-nas-ok { background: #5096ff; border-color: #5096ff; color: #fff; font-weight: 600; }

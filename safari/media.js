@@ -3,6 +3,15 @@
 // y, si puede, qué versión exacta tienes.
 (() => {
   "use strict";
+  // Si hay otra copia de UIspa instalada (p. ej. una versión antigua), solo
+  // trabaja la primera que llegó a la página; las demás se apartan.
+  {
+    const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+    const me = ext?.runtime?.id || "uispa";
+    const owner = document.documentElement.dataset.uispaOwner;
+    if (owner && owner !== me) return;
+    document.documentElement.dataset.uispaOwner = me;
+  }
   if (window.__uispaPlex) return;
   window.__uispaPlex = true;
   if (!/[?&]view=title\b/.test(location.search)) return;

@@ -35,3 +35,11 @@ code { background: var(--s2); padding: 1px 6px; border-radius: 4px; font-size: 1
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: #4a5060; vertical-align: middle; }
 .dot.set { background: #3fb950; box-shadow: 0 0 0 2px rgba(63,185,80,.25); }
 .tab.on .dot:not(.set) { background: rgba(26,20,0,.35); }
+section + section { margin-top: 20px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+.opt { color: var(--muted); font-weight: 400; }
+#dsStatus { margin-top: 14px; font-size: 14px; min-height: 1.5em; }
+#dsStatus.ok { color: #7ee787; }
+#dsStatus.err { color: #ff9a92; }
+#dsStatus .warn { color: #f2cc60; display: block; margin-top: 4px; }

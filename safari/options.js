@@ -147,3 +147,72 @@ api.storage.local.get(["server", "plexUrl", "plexToken", "jfUrl", "jfKey"]).then
   const name = api.runtime.getManifest().name;
   if (name !== "UIspa") { $("title").textContent = name + " · Ajustes"; document.title = name + " · Ajustes"; }
 }
+
+// ------------------------------------------------------------ Synology Download Station
+{
+  const st = $("dsStatus");
+  const dsSay = (msg, cls = "") => { st.className = cls; st.textContent = msg; };
+  const DS_KEYS = ["dsUrl", "dsUser", "dsPass", "dsDest"];
+
+  function dsUrl(raw) {
+    let v = (raw || "").trim();
+    if (!v) return null;
+    if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+    try {
+      const u = new URL(v);
+      if (!u.port) u.port = u.protocol === "https:" ? "5001" : "5000";
+      return u.origin;
+    } catch (_) { return null; }
+  }
+
+  // Lee el formulario y pide permiso para la dirección del NAS (desde el clic)
+  async function withNas(fn) {
+    const url = dsUrl($("dsUrl").value);
+    const user = $("dsUser").value.trim();
+    const pass = $("dsPass").value;
+    if (!url) { dsSay("Escribe la dirección del NAS, por ejemplo http://192.168.1.10:5000", "err"); return; }
+    if (!user || !pass) { dsSay("Faltan el usuario o la contraseña.", "err"); return; }
+    let granted = false;
+    try { granted = await api.permissions.request({ origins: [hostPattern(url)] }); }
+    catch (e) { dsSay("No se pudo pedir permiso: " + e.message, "err"); return; }
+    if (!granted) { dsSay(`Sin permiso para acceder a ${url}, la extensión no puede usar tu NAS.`, "err"); return; }
+    $("dsUrl").value = url;
+    await fn({ url, user, pass, dest: $("dsDest").value.trim() });
+  }
+
+  async function dsTest(cfg) {
+    dsSay("Conectando…");
+    const r = await api.runtime.sendMessage({ action: "ds-test", ...cfg });
+    if (!r?.ok) { dsSay(r?.error || "No se pudo conectar.", "err"); return false; }
+    dsSay(`Conectado a Download Station como «${cfg.user}».` + (r.defaultDestination ? ` Carpeta predeterminada: ${r.defaultDestination}.` : ""), "ok");
+    for (const w of r.warnings || []) {
+      const span = document.createElement("span");
+      span.className = "warn";
+      span.textContent = "⚠ " + w;
+      st.append(span);
+    }
+    return true;
+  }
+
+  $("dsTest").addEventListener("click", () => withNas(dsTest));
+  $("dsSave").addEventListener("click", () => withNas(async (cfg) => {
+    const dest = cfg.dest.replace(/^\/+|\/+$/g, "");
+    $("dsDest").value = dest;
+    await api.storage.local.set({ dsUrl: cfg.url, dsUser: cfg.user, dsPass: cfg.pass, dsDest: dest });
+    await api.runtime.sendMessage({ action: "ds-reset" });
+    if (await dsTest(cfg)) st.prepend("Guardado. Recarga Hispashare para ver los botones 📥. ");
+  }));
+  $("dsClear").addEventListener("click", async () => {
+    const { dsUrl: old } = await api.storage.local.get("dsUrl");
+    await api.storage.local.remove([...DS_KEYS, "dsRecent"]);
+    await api.runtime.sendMessage({ action: "ds-reset" });
+    if (old) { try { await api.permissions.remove({ origins: [hostPattern(old)] }); } catch (_) {} }
+    DS_KEYS.forEach((k) => ($(k).value = ""));
+    dsSay("Download Station desconectado. Se han borrado la dirección y las credenciales.");
+  });
+
+  api.storage.local.get(DS_KEYS).then((s) => {
+    DS_KEYS.forEach((k) => { if (s[k]) $(k).value = s[k]; });
+    if (s.dsUrl && s.dsUser && s.dsPass) dsSay("Download Station configurado. Puedes probar la conexión cuando quieras.", "ok");
+  });
+}

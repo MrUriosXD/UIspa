@@ -50,6 +50,46 @@
     </details>
     <p class="muted small">Las credenciales se guardan solo en este navegador y únicamente se envían a tu servidor, nunca a Hispashare ni a ningún otro sitio. Dan acceso a tu servidor: no las compartas.</p>
   </section>
+
+  <section>
+    <h2>Descargas en el NAS (Synology)</h2>
+    <p class="muted">Si lo configuras, junto a cada botón de copiar aparecerá 📥 para mandar los enlaces directamente a Download Station, eligiendo la carpeta en cada envío. Necesitas DSM 7 con las descargas eMule activadas en Download Station.</p>
+
+    <label for="dsUrl">Dirección del NAS</label>
+    <input id="dsUrl" type="url" placeholder="http://192.168.1.10:5000" autocomplete="off" spellcheck="false">
+
+    <div class="cols">
+      <div>
+        <label for="dsUser">Usuario</label>
+        <input id="dsUser" type="text" autocomplete="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="dsPass">Contraseña</label>
+        <input id="dsPass" type="password" autocomplete="new-password">
+      </div>
+    </div>
+
+    <label for="dsDest">Carpeta por defecto <span class="opt">(opcional)</span></label>
+    <input id="dsDest" type="text" placeholder="docker/data" autocomplete="off" spellcheck="false">
+    <p class="muted small">Ruta dentro del NAS empezando por la carpeta compartida. Al pulsar 📥 podrás cambiarla para cada envío; si la dejas vacía, se usa la carpeta predeterminada de Download Station.</p>
+
+    <div class="actions">
+      <button id="dsTest" type="button" class="ghost">Probar conexión</button>
+      <button id="dsSave" type="button">Guardar</button>
+      <button id="dsClear" type="button" class="ghost danger">Desconectar</button>
+    </div>
+    <div id="dsStatus" role="status"></div>
+
+    <details>
+      <summary>¿Cómo lo preparo en el NAS?</summary>
+      <ol>
+        <li>Crea en DSM un usuario solo para esto (<b>Panel de control → Usuario y grupo</b>). En permisos de aplicaciones deja <b>Permitir</b> solo en Download Station y <b>Denegar</b> en el resto. No le actives la verificación en dos pasos.</li>
+        <li>Dale <b>lectura/escritura</b> en las carpetas donde quieras guardar las descargas.</li>
+        <li>En Download Station, con tu administrador: <b>⚙ Configuración → General → Habilitar descargas eMule</b>.</li>
+        <li><b>Dirección:</b> en tu red local, <code>http://IP-del-NAS:5000</code>. Con HTTPS (puerto 5001) solo funciona si el NAS tiene un certificado válido; el autofirmado de fábrica lo rechaza el navegador.</li>
+      </ol>
+    </details>
+  </section>
 </main>
 <script src="options.js"></script>
 </body>

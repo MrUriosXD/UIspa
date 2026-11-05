@@ -1,6 +1,6 @@
 # UIspa
 
-Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
+Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hispashare](https://www.hispashare.org) un diseño más limpio y moderno, facilita copiar los enlaces ed2k o enviarlos a Synology Download Station y, si quieres, te dice qué tienes ya en tu servidor Plex o Jellyfin.
 
 > Proyecto no oficial. No tiene relación con Hispashare: solo cambia cómo se ve la web en tu navegador y no aloja ni distribuye ningún contenido.
 
@@ -19,6 +19,10 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
 - Botón «Copiar» en la ventana de enlaces de la propia web.
 - Atajos: `Alt+Shift+C` copia todos los enlaces de la página y `Alt+Shift+S` los capítulos marcados. También desde el menú del botón derecho o el icono de la barra.
 - Los atajos se pueden cambiar en `chrome://extensions/shortcuts` (Chrome) o en `about:addons` → rueda dentada ⚙ → **Gestionar atajos de teclado de extensiones** (Firefox).
+
+**Enviar a Synology Download Station (opcional)**
+- Botón 📥 junto a cada capítulo o archivo, y «📥 Al NAS (seleccionados / todos)» en cada versión.
+- Al enviar eliges la carpeta del NAS: aparece la carpeta por defecto y las últimas que hayas usado.
 
 **Plex o Jellyfin (opcional)**
 - En cada ficha marca qué episodios o películas tienes ya en tu servidor Plex, en Jellyfin o en los dos a la vez (una marca por servidor, en su color).
@@ -88,11 +92,26 @@ Limitaciones en Safari: los botones de copiar funcionan igual que en los otros n
 
 En Safari, abre los ajustes desde el menú **Más** de Hispashare o en **Safari → Ajustes → Extensiones → UIspa → Ajustes**.
 
+## Enviar a Synology Download Station
+
+Requiere DSM 7 con Download Station.
+
+1. **En el NAS:**
+   - Crea un usuario solo para esto (**Panel de control → Usuario y grupo**). En los permisos de aplicaciones marca **Permitir** solo en Download Station y **Denegar** en todo lo demás.
+   - Dale **lectura/escritura** en las carpetas donde quieras guardar las descargas.
+   - No le actives la verificación en dos pasos.
+   - En Download Station, con tu administrador: **⚙ Configuración → General → Habilitar descargas eMule**.
+2. **En UIspa:** en los ajustes, sección **Descargas en el NAS (Synology)**:
+   - **Dirección:** por ejemplo `http://192.168.1.10:5000`. Con HTTPS solo funciona si el NAS tiene un certificado válido; el autofirmado de fábrica lo rechaza el navegador.
+   - **Usuario y contraseña** del usuario que has creado.
+   - **Carpeta por defecto:** opcional, por ejemplo `docker/data`.
+3. Pulsa **Guardar** y recarga Hispashare: aparecerán los botones 📥.
+
 ## Privacidad
 
 - UIspa no recoge ni envía datos a ningún servidor propio ni de terceros. En Firefox lo declara así en su instalación (`data_collection_permissions: none`).
-- Solo se comunica con Hispashare, para obtener los enlaces que ya ofrece la web, y con tu servidor Plex o Jellyfin si lo configuras.
-- La dirección y la credencial del servidor se guardan únicamente en tu navegador. Las consultas salen de la extensión, no de la página, así que la web nunca las ve. Del servidor solo se usan el tamaño y la resolución de los archivos, nunca sus rutas.
+- Solo se comunica con Hispashare, para obtener los enlaces que ya ofrece la web, y con tu servidor Plex o Jellyfin y tu NAS Synology si los configuras.
+- Las direcciones, credenciales y contraseñas se guardan únicamente en tu navegador; la contraseña del NAS viaja en el cuerpo de la petición, nunca en la dirección. Las consultas salen de la extensión, no de la página, así que la web nunca las ve. Del servidor solo se usan el tamaño y la resolución de los archivos, nunca sus rutas.
 
 ## Permisos
 
@@ -101,8 +120,8 @@ En Safari, abre los ajustes desde el menú **Más** de Hispashare o en **Safari 
 | Acceso a `hispashare.org` / `hispashare.com` | Aplicar el rediseño y añadir los botones |
 | `clipboardWrite` (y `offscreen` en Chrome) | Copiar enlaces al portapapeles, también desde atajos y menús |
 | `contextMenus` | Opciones del menú del botón derecho |
-| `storage` | Guardar la configuración del servidor |
-| Acceso opcional a la dirección de tu servidor | Solo se pide si configuras Plex o Jellyfin, y únicamente para esa dirección |
+| `storage` | Guardar la configuración de los servidores |
+| Acceso opcional a la dirección de tu servidor o NAS | Solo se pide si configuras Plex, Jellyfin o Synology, y únicamente para esa dirección |
 
 ## Estructura
 
@@ -124,6 +143,7 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 | `media.js` | Marcas de Plex o Jellyfin en las fichas |
 | `background.js` | Segundo plano: atajos y menús |
 | `media-bg.js`, `plex-bg.js`, `jellyfin-bg.js` | Consultas al servidor multimedia |
+| `synology-bg.js` | Envío de enlaces a Download Station |
 | `offscreen.html`, `offscreen.js` | Solo Chrome: copia al portapapeles desde segundo plano |
 | `options.html`, `options.js`, `options.css` | Página de ajustes |
 
@@ -133,6 +153,11 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
 
 ## Novedades
+
+**2.1.0**
+- Envío de enlaces a Synology Download Station, eligiendo la carpeta en cada envío.
+- Si hay dos copias de UIspa instaladas a la vez, ya no se estorban: solo trabaja una.
+- El permiso para acceder a tu servidor se pide sin puerto (necesario en Safari).
 
 **Safari (experimental)**
 - Nueva versión para Safari que se compila en tu Mac con Xcode (`build-safari.sh`).

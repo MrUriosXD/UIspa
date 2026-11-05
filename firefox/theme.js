@@ -3,6 +3,17 @@
 // votar, comentarios, popup de enlaces, búsqueda avanzada…).
 (() => {
   "use strict";
+  // Si hay otra copia de UIspa instalada (p. ej. una versión antigua), solo
+  // trabaja la primera que llegó a la página; las demás se apartan.
+  {
+    const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+    const me = ext?.runtime?.id || "uispa";
+    const owner = document.documentElement.dataset.uispaOwner;
+    if (owner && owner !== me) return;
+    document.documentElement.dataset.uispaOwner = me;
+  }
+  // Otra copia (sin esta protección) ya ha montado el rediseño
+  if (document.getElementById("hcm-root")) return;
   const html = document.documentElement;
 
   // Botón para volver al diseño moderno cuando está desactivado
@@ -160,7 +171,7 @@
     return h("a", { href: "#", class: "hcm-settings-link", onclick: (e) => {
       e.preventDefault();
       ext.runtime.sendMessage({ action: "open-options" });
-    } }, "⚙ Ajustes de la extensión (Plex / Jellyfin)");
+    } }, "⚙ Ajustes de la extensión");
   }
 
   // Desplegables: abrir con clic, cerrar al hacer clic fuera

@@ -1,5 +1,14 @@
 (() => {
   "use strict";
+  // Si hay otra copia de UIspa instalada (p. ej. una versión antigua), solo
+  // trabaja la primera que llegó a la página; las demás se apartan.
+  {
+    const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+    const me = ext?.runtime?.id || "uispa";
+    const owner = document.documentElement.dataset.uispaOwner;
+    if (owner && owner !== me) return;
+    document.documentElement.dataset.uispaOwner = me;
+  }
   if (window.__hispashareCopy) return;
   window.__hispashareCopy = true;
 
@@ -27,7 +36,7 @@
       return true;
     } catch (_) { /* sigue */ }
     try {
-      // el service worker copia mediante un documento offscreen, sin depender del clic
+      // el segundo plano intenta copiar sin depender del clic
       const r = await api?.runtime?.sendMessage({ action: "bg-copy", text });
       if (r?.ok) return true;
     } catch (_) { /* sigue */ }
@@ -186,6 +195,7 @@
   }
 
   const done = new Set();
+  const uiByGroup = new Map(); // id → { last: último botón del grupo, rows: Map(i → botón 📋) }
   function enhanceGroup(g) {
     if (done.has(g.id) || !g.rows.length) return;
     done.add(g.id);
@@ -205,6 +215,8 @@
       b.addEventListener("pointerenter", warm);
       b.addEventListener("focus", warm);
     }
+    const ui = { last: buttons[buttons.length - 1], rows: new Map() };
+    uiByGroup.set(g.id, ui);
     if (g.btn) {
       // series: junto a "Mostrar seleccionados"
       g.btn.after(...buttons.flatMap((b) => [document.createTextNode(" "), b]));
@@ -236,6 +248,7 @@
       (tr || link).addEventListener("pointerenter", warm);
       b.addEventListener("focus", warm);
       link.after(b);
+      ui.rows.set(i, b);
 
       // Alt+clic en el nombre = copiar en vez de abrir el popup
       link.addEventListener("click", (e) => {
@@ -243,6 +256,136 @@
         e.preventDefault(); e.stopImmediatePropagation();
         b.click();
       }, true);
+    }
+  }
+
+  // ---------------------------------------------------------------- Synology
+  // Botones 📥 para mandar los enlaces a Download Station (solo si está configurado)
+  let nasOn = false;
+  const nasDone = new Set();
+  // Recuadro para elegir la carpeta de destino. Devuelve la carpeta ("" = la
+  // predeterminada de Download Station) o null si se cancela.
+  let openPop = null;
+  async function pickFolder(anchor) {
+    openPop?.cancel();
+    let st = {};
+    try { st = (await api.runtime.sendMessage({ action: "ds-status" })) || {}; } catch (_) {}
+    return new Promise((resolve) => {
+      const pop = document.createElement("div");
+      pop.className = "hc-nas-pop";
+      pop.setAttribute("role", "dialog");
+      const title = document.createElement("div");
+      title.className = "hc-nas-title";
+      title.textContent = "📥 Enviar a Download Station";
+      const label = document.createElement("label");
+      label.textContent = "Carpeta";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = st.dest || "";
+      input.placeholder = "Carpeta predeterminada de Download Station";
+      input.spellcheck = false;
+      label.append(input);
+      const chips = document.createElement("div");
+      chips.className = "hc-nas-chips";
+      const options = [...new Set([st.dest, ...(st.recent || [])].filter(Boolean))].slice(0, 6);
+      for (const d of options) {
+        const c = document.createElement("button");
+        c.type = "button";
+        c.textContent = d === st.dest ? `${d} (por defecto)` : d;
+        c.addEventListener("click", () => { input.value = d; input.focus(); });
+        chips.append(c);
+      }
+      const row = document.createElement("div");
+      row.className = "hc-nas-actions";
+      const cancel = document.createElement("button");
+      cancel.type = "button"; cancel.textContent = "Cancelar";
+      const ok = document.createElement("button");
+      ok.type = "button"; ok.className = "hc-nas-ok"; ok.textContent = "Enviar";
+      row.append(cancel, ok);
+      pop.append(title, label, ...(options.length ? [chips] : []), row);
+
+      const close = (value) => {
+        document.removeEventListener("pointerdown", outside, true);
+        pop.remove();
+        if (openPop?.pop === pop) openPop = null;
+        resolve(value);
+      };
+      const outside = (e) => { if (!pop.contains(e.target)) close(null); };
+      cancel.addEventListener("click", () => close(null));
+      ok.addEventListener("click", () => close(input.value.trim().replace(/^\/+|\/+$/g, "")));
+      pop.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); ok.click(); }
+        if (e.key === "Escape") { e.preventDefault(); close(null); }
+        e.stopPropagation();
+      });
+      document.documentElement.append(pop);
+      // colocado bajo el botón, sin salirse de la ventana
+      const r = anchor.getBoundingClientRect();
+      const w = pop.offsetWidth, h = pop.offsetHeight;
+      let left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
+      let top = r.bottom + 6;
+      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+      pop.style.left = left + "px";
+      pop.style.top = top + "px";
+      setTimeout(() => document.addEventListener("pointerdown", outside, true), 0);
+      openPop = { pop, cancel: () => close(null) };
+      input.focus();
+      input.select();
+    });
+  }
+
+  async function sendToNas(g, btn, kind) {
+    if (btn.dataset.busy) return;
+    if (kind === "sel" && !maskSelected(g).includes("1")) { toast("Marca algún capítulo primero", true); return; }
+    prefetch(g); // los enlaces se van pidiendo mientras eliges carpeta
+    const dest = await pickFolder(btn);
+    if (dest === null) return;
+    setBusy(btn, true);
+    try {
+      const c = getAll(g);
+      await c.promise;
+      let links = pick(g, c.links, kind);
+      if (!links) {
+        const mask = kind === "sel" ? maskSelected(g) : kind === "all" ? maskAll(g.count) : "0".repeat(kind) + "1" + "0".repeat(g.count - kind - 1);
+        links = await fetchLinks(g.id, mask);
+      }
+      if (!links.length) { toast("No se han encontrado enlaces", true); return; }
+      const r = await api.runtime.sendMessage({ action: "ds-add", links, dest });
+      if (r?.ok) {
+        toast(`📥 ${r.count === 1 ? "Enviado 1 enlace" : `Enviados ${r.count} enlaces`} a Download Station${r.destination ? " · " + r.destination : ""}`);
+        if (btn.classList.contains("hc-copy-btn")) { btn.textContent = "✔"; setTimeout(() => (btn.textContent = "📥"), 1500); }
+      } else {
+        toast("Download Station: " + (r?.error || "no se pudo enviar"), true);
+      }
+    } catch (e) {
+      toast("Error al enviar a Download Station: " + e.message, true);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  function enhanceNas(g) {
+    const ui = uiByGroup.get(g.id);
+    if (!nasOn || !ui || nasDone.has(g.id)) return;
+    nasDone.add(g.id);
+    const hasChecks = g.rows.some((r) => document.getElementById(`elink_${g.id}_${r.i}`));
+    const buttons = [];
+    if (hasChecks) buttons.push(makeSiteButton("📥 Al NAS (seleccionados)", "Enviar los capítulos marcados a Download Station", (b) => sendToNas(g, b, "sel")));
+    buttons.push(g.count === 1
+      ? makeSiteButton("📥 Enviar al NAS", "Enviar a Download Station", (b) => sendToNas(g, b, "all"))
+      : makeSiteButton("📥 Al NAS (todos)", "Enviar todos los enlaces de esta versión a Download Station", (b) => sendToNas(g, b, "all")));
+    buttons.forEach((b) => b.classList.add("hc-nas"));
+    ui.last.after(...buttons.flatMap((b) => [document.createTextNode(" "), b]));
+    for (const { i } of g.rows) {
+      const copy = ui.rows.get(i);
+      if (!copy) continue;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "hc-copy-btn hc-nas-btn";
+      b.title = "Enviar a Download Station";
+      b.textContent = "📥";
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); sendToNas(g, b, i); });
+      copy.after(b);
     }
   }
 
@@ -292,10 +435,16 @@
 
   // ---------------------------------------------------------------- arranque
   function scan() {
-    findGroups().forEach(enhanceGroup);
+    findGroups().forEach((g) => { enhanceGroup(g); enhanceNas(g); });
     enhancePopup();
   }
   scan();
+  // ¿Está configurado Download Station? Si lo está, se añaden los botones 📥
+  try {
+    api?.runtime?.sendMessage({ action: "ds-status" })?.then?.((r) => {
+      if (r?.configured) { nasOn = true; scan(); }
+    }, () => {});
+  } catch (_) { /* sin segundo plano: nada que hacer */ }
   let pending;
   new MutationObserver(() => {
     clearTimeout(pending);
