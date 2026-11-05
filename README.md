@@ -22,7 +22,7 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
 
 **Enviar a Synology Download Station (opcional)**
 - Botón 📥 junto a cada capítulo o archivo, y «📥 Al NAS (seleccionados / todos)» en cada versión.
-- Al enviar eliges la carpeta del NAS: aparece la carpeta por defecto y las últimas que hayas usado.
+- Al enviar eliges la carpeta navegando por las carpetas del NAS, o escribiéndola. Se abre en la última que usaste y tienes atajos a la carpeta por defecto y a las recientes.
 
 **Plex o Jellyfin (opcional)**
 - En cada ficha marca qué episodios o películas tienes ya en tu servidor Plex, en Jellyfin o en los dos a la vez (una marca por servidor, en su color).
@@ -97,8 +97,8 @@ En Safari, abre los ajustes desde el menú **Más** de Hispashare o en **Safari 
 Requiere DSM 7 con Download Station.
 
 1. **En el NAS:**
-   - Crea un usuario solo para esto (**Panel de control → Usuario y grupo**). En los permisos de aplicaciones marca **Permitir** solo en Download Station y **Denegar** en todo lo demás.
-   - Dale **lectura/escritura** en las carpetas donde quieras guardar las descargas.
+   - Crea un usuario solo para esto (**Panel de control → Usuario y grupo**). En los permisos de aplicaciones marca **Permitir** solo en **Download Station** y **File Station** (esta última sirve para explorar las carpetas) y **Denegar** en todo lo demás. Sin File Station también funciona, pero tendrás que escribir la carpeta a mano.
+   - Dale **lectura/escritura** en las carpetas donde quieras guardar las descargas. Al explorar solo verás esas carpetas.
    - No le actives la verificación en dos pasos.
    - En Download Station, con tu administrador: **⚙ Configuración → General → Habilitar descargas eMule**.
 2. **En UIspa:** en los ajustes, sección **Descargas en el NAS (Synology)**:
@@ -143,7 +143,7 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 | `media.js` | Marcas de Plex o Jellyfin en las fichas |
 | `background.js` | Segundo plano: atajos y menús |
 | `media-bg.js`, `plex-bg.js`, `jellyfin-bg.js` | Consultas al servidor multimedia |
-| `synology-bg.js` | Envío de enlaces a Download Station |
+| `synology-bg.js` | Envío de enlaces a Download Station y exploración de carpetas |
 | `offscreen.html`, `offscreen.js` | Solo Chrome: copia al portapapeles desde segundo plano |
 | `options.html`, `options.js`, `options.css` | Página de ajustes |
 
@@ -153,6 +153,9 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
 
 ## Novedades
+
+**2.2.0**
+- Al enviar al NAS puedes explorar sus carpetas y elegir el destino (requiere permiso de File Station para el usuario).
 
 **2.1.0**
 - Envío de enlaces a Synology Download Station, eligiendo la carpeta en cada envío.

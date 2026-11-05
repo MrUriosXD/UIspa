@@ -74,3 +74,21 @@ html.hcm a.BUTTON.hc-site-btn.hc-nas { background: rgba(80,150,255,.12) !importa
 .hc-nas-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 .hc-nas-actions button { border-radius: 8px; padding: 6px 14px; font-size: 13px; }
 .hc-nas-pop .hc-nas-ok { background: #5096ff; border-color: #5096ff; color: #fff; font-weight: 600; }
+.hc-nas-pop { width: 360px; }
+.hc-nas-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-top: 10px; font-size: 12px; }
+.hc-nas-pop .hc-nas-crumb { border: 0; background: none; padding: 2px 4px; border-radius: 4px; color: #8ab8ff; }
+.hc-nas-pop .hc-nas-crumb:hover { background: #1e222b; }
+.hc-nas-sep { color: #6b7385; }
+.hc-nas-list {
+  margin-top: 6px; max-height: 200px; overflow: auto; border: 1px solid #2a2f3a; border-radius: 8px;
+  background: #12151b; padding: 4px; scrollbar-color: #2a2f3a transparent;
+}
+.hc-nas-pop .hc-nas-item {
+  display: block; width: 100%; text-align: left; border: 0; border-radius: 6px; background: none;
+  padding: 6px 8px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hc-nas-pop .hc-nas-item:hover { background: #1e222b; color: #8ab8ff; }
+.hc-nas-pop .hc-nas-up { color: #9aa3b4; }
+.hc-nas-empty { color: #6b7385; font-size: 12px; padding: 8px; }
+.hc-nas-note:empty { display: none; }
+.hc-nas-note { margin-top: 8px; font-size: 12px; color: #f2cc60; }

@@ -263,46 +263,90 @@
   // Botones 📥 para mandar los enlaces a Download Station (solo si está configurado)
   let nasOn = false;
   const nasDone = new Set();
-  // Recuadro para elegir la carpeta de destino. Devuelve la carpeta ("" = la
-  // predeterminada de Download Station) o null si se cancela.
+  // Recuadro para elegir la carpeta de destino, con explorador de carpetas
+  // del NAS. Devuelve la carpeta ("" = la predeterminada de Download Station)
+  // o null si se cancela.
   let openPop = null;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   async function pickFolder(anchor) {
     openPop?.cancel();
     let st = {};
     try { st = (await api.runtime.sendMessage({ action: "ds-status" })) || {}; } catch (_) {}
     return new Promise((resolve) => {
-      const pop = document.createElement("div");
-      pop.className = "hc-nas-pop";
+      const pop = el("div", "hc-nas-pop");
       pop.setAttribute("role", "dialog");
-      const title = document.createElement("div");
-      title.className = "hc-nas-title";
-      title.textContent = "📥 Enviar a Download Station";
-      const label = document.createElement("label");
-      label.textContent = "Carpeta";
-      const input = document.createElement("input");
+      const label = el("label", null, "Carpeta");
+      const input = el("input");
       input.type = "text";
-      input.value = st.dest || "";
       input.placeholder = "Carpeta predeterminada de Download Station";
       input.spellcheck = false;
       label.append(input);
-      const chips = document.createElement("div");
-      chips.className = "hc-nas-chips";
+
+      // Explorador: ruta (migas) + subcarpetas
+      const crumbs = el("div", "hc-nas-crumbs");
+      const list = el("div", "hc-nas-list");
+      const note = el("div", "hc-nas-note");
+
+      const chips = el("div", "hc-nas-chips");
       const options = [...new Set([st.dest, ...(st.recent || [])].filter(Boolean))].slice(0, 6);
       for (const d of options) {
-        const c = document.createElement("button");
+        const c = el("button", null, d === st.dest ? `${d} (por defecto)` : d);
         c.type = "button";
-        c.textContent = d === st.dest ? `${d} (por defecto)` : d;
-        c.addEventListener("click", () => { input.value = d; input.focus(); });
+        c.addEventListener("click", () => browse(d));
         chips.append(c);
       }
-      const row = document.createElement("div");
-      row.className = "hc-nas-actions";
-      const cancel = document.createElement("button");
-      cancel.type = "button"; cancel.textContent = "Cancelar";
-      const ok = document.createElement("button");
-      ok.type = "button"; ok.className = "hc-nas-ok"; ok.textContent = "Enviar";
+      const row = el("div", "hc-nas-actions");
+      const cancel = el("button", null, "Cancelar");
+      const ok = el("button", "hc-nas-ok", "Enviar aquí");
+      cancel.type = ok.type = "button";
       row.append(cancel, ok);
-      pop.append(title, label, ...(options.length ? [chips] : []), row);
+      pop.append(el("div", "hc-nas-title", "📥 Enviar a Download Station"), label, crumbs, list, note, ...(options.length ? [chips] : []), row);
+
+      let seq = 0;
+      async function browse(path) {
+        const my = ++seq;
+        input.value = path;
+        crumbs.textContent = "";
+        const parts = path ? path.split("/") : [];
+        const home = el("button", "hc-nas-crumb", "NAS");
+        home.type = "button";
+        home.addEventListener("click", () => browse(""));
+        crumbs.append(home);
+        parts.forEach((part, i) => {
+          crumbs.append(el("span", "hc-nas-sep", "›"));
+          const b = el("button", "hc-nas-crumb", part);
+          b.type = "button";
+          b.addEventListener("click", () => browse(parts.slice(0, i + 1).join("/")));
+          crumbs.append(b);
+        });
+        list.textContent = "";
+        list.append(el("div", "hc-nas-empty", "Cargando…"));
+        note.textContent = "";
+        let r;
+        try { r = await api.runtime.sendMessage({ action: "ds-list", path }); } catch (e) { r = { ok: false, error: e.message }; }
+        if (my !== seq) return; // se pidió otra carpeta mientras tanto
+        list.textContent = "";
+        if (!r?.ok) {
+          list.hidden = true; crumbs.hidden = true;
+          note.textContent = r?.error || "No se pudieron leer las carpetas del NAS";
+          return;
+        }
+        list.hidden = false; crumbs.hidden = false;
+        if (path) {
+          const up = el("button", "hc-nas-item hc-nas-up", "↑ Subir");
+          up.type = "button";
+          up.addEventListener("click", () => browse(parts.slice(0, -1).join("/")));
+          list.append(up);
+        }
+        for (const f of r.folders) {
+          const b = el("button", "hc-nas-item", "📁 " + f.name);
+          b.type = "button";
+          b.title = f.path;
+          b.addEventListener("click", () => browse(f.path));
+          list.append(b);
+        }
+        if (!r.folders.length) list.append(el("div", "hc-nas-empty", path ? "Sin subcarpetas" : "No hay carpetas compartidas accesibles"));
+      }
 
       const close = (value) => {
         document.removeEventListener("pointerdown", outside, true);
@@ -318,19 +362,25 @@
         if (e.key === "Escape") { e.preventDefault(); close(null); }
         e.stopPropagation();
       });
+      // Si se escribe una ruta a mano y se pulsa Tab o se sale del campo, se explora
+      input.addEventListener("change", () => browse(input.value.trim().replace(/^\/+|\/+$/g, "")));
+
       document.documentElement.append(pop);
-      // colocado bajo el botón, sin salirse de la ventana
-      const r = anchor.getBoundingClientRect();
-      const w = pop.offsetWidth, h = pop.offsetHeight;
-      let left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
-      let top = r.bottom + 6;
-      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
-      pop.style.left = left + "px";
-      pop.style.top = top + "px";
+      const place = () => {
+        const r = anchor.getBoundingClientRect();
+        const w = pop.offsetWidth, h = pop.offsetHeight;
+        const left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
+        let top = r.bottom + 6;
+        if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+        pop.style.left = left + "px";
+        pop.style.top = top + "px";
+      };
+      place();
       setTimeout(() => document.addEventListener("pointerdown", outside, true), 0);
       openPop = { pop, cancel: () => close(null) };
+      // Empieza en la última carpeta usada o en la de por defecto
+      browse((st.recent || [])[0] || st.dest || "").then(place);
       input.focus();
-      input.select();
     });
   }
 
