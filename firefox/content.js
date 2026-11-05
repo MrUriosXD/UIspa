@@ -346,6 +346,44 @@
           list.append(b);
         }
         if (!r.folders.length) list.append(el("div", "hc-nas-empty", path ? "Sin subcarpetas" : "No hay carpetas compartidas accesibles"));
+        if (path) list.append(newFolderRow(path));
+      }
+
+      // «Nueva carpeta»: se despliega un campo dentro de la lista
+      function newFolderRow(path) {
+        const btn = el("button", "hc-nas-item hc-nas-new", "＋ Nueva carpeta");
+        btn.type = "button";
+        btn.addEventListener("click", () => {
+          const box = el("div", "hc-nas-newbox");
+          const name = el("input");
+          name.type = "text";
+          name.placeholder = "Nombre de la carpeta";
+          name.spellcheck = false;
+          const create = el("button", "hc-nas-ok", "Crear");
+          create.type = "button";
+          box.append(name, create);
+          btn.replaceWith(box);
+          name.focus();
+          const undo = () => { box.replaceWith(newFolderRow(path)); };
+          const submit = async () => {
+            const n = name.value.trim();
+            if (!n) { name.focus(); return; }
+            create.disabled = name.disabled = true;
+            note.textContent = "";
+            let r;
+            try { r = await api.runtime.sendMessage({ action: "ds-mkdir", path, name: n }); } catch (e) { r = { ok: false, error: e.message }; }
+            if (r?.ok) { browse(r.path); return; }
+            create.disabled = name.disabled = false;
+            note.textContent = r?.error || "No se pudo crear la carpeta";
+            name.focus(); name.select();
+          };
+          create.addEventListener("click", submit);
+          name.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); submit(); }
+            if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); note.textContent = ""; undo(); }
+          });
+        });
+        return btn;
       }
 
       const close = (value) => {

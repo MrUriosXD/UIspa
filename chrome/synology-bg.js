@@ -68,7 +68,7 @@
     if (mem.apis) return mem.apis;
     const r = await call(cfg, "query.cgi", {
       api: "SYNO.API.Info", version: "1", method: "query",
-      query: "SYNO.API.Auth,SYNO.DownloadStation.Task,SYNO.DownloadStation.Info,SYNO.FileStation.List"
+      query: "SYNO.API.Auth,SYNO.DownloadStation.Task,SYNO.DownloadStation.Info,SYNO.FileStation.List,SYNO.FileStation.CreateFolder"
     });
     if (!r.success || !r.data) throw new Error("La dirección no parece un NAS Synology");
     if (!r.data["SYNO.DownloadStation.Task"]) throw new Error("Download Station no está instalado en el NAS");
@@ -133,6 +133,31 @@
     return { ok: true, path: dir, folders: (d.files || []).filter((x) => x.isdir !== false).map((x) => ({ name: x.name, path: strip(x.path) })) };
   }
 
+  // Crea una subcarpeta dentro de "parent" (no se pueden crear carpetas compartidas)
+  const CREATE_ERRORS = {
+    ...FS_ERRORS,
+    missing: "Esta versión de DSM no permite crear carpetas desde la extensión",
+    407: "No tienes permiso para crear carpetas aquí",
+    414: "Ya existe una carpeta con ese nombre",
+    418: "Ese nombre no es válido",
+    1100: "El NAS no pudo crear la carpeta",
+    1101: "Se ha alcanzado el límite de carpetas"
+  };
+  async function createFolder(parent, rawName) {
+    const cfg = await config();
+    if (!cfg) return { ok: false, error: "Download Station no está configurado" };
+    const dir = cleanDir(parent);
+    const name = String(rawName || "").trim();
+    if (!dir) return { ok: false, error: "Entra primero en una carpeta compartida" };
+    if (!name || name === "." || name === ".." || /[\\/:*?"<>|]/.test(name) || name.length > 200) {
+      return { ok: false, error: "Ese nombre no es válido" };
+    }
+    const d = await syno(cfg, "SYNO.FileStation.CreateFolder",
+      { folder_path: "/" + dir, name, force_parent: "false" }, CREATE_ERRORS, "FileStation");
+    const made = d.folders?.[0]?.path;
+    return { ok: true, path: made ? cleanDir(made) : `${dir}/${name}` };
+  }
+
   // Las comas separan enlaces en la API: se codifican las que haya dentro de un nombre
   const encodeLink = (l) => l.replace(/,/g, "%2C");
 
@@ -179,6 +204,10 @@
       listFolders(msg.path).then(sendResponse, (e) => sendResponse({ ok: false, error: e.message }));
       return true;
     }
+    if (msg?.action === "ds-mkdir") {
+      createFolder(msg.path, msg.name).then(sendResponse, (e) => sendResponse({ ok: false, error: e.message }));
+      return true;
+    }
     if (msg?.action === "ds-test") {
       test(msg).then((r) => sendResponse({ ok: true, ...r }), (e) => sendResponse({ ok: false, error: e.message }));
       return true;
@@ -189,5 +218,5 @@
     }
   });
 
-  globalThis.__uispaSynology = { add, test, listFolders, mem };
+  globalThis.__uispaSynology = { add, test, listFolders, createFolder, mem };
 })();

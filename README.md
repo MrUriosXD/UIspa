@@ -22,7 +22,7 @@ Extensión para **Chrome**, **Firefox** y **Safari** (experimental) que da a [Hi
 
 **Enviar a Synology Download Station (opcional)**
 - Botón 📥 junto a cada capítulo o archivo, y «📥 Al NAS (seleccionados / todos)» en cada versión.
-- Al enviar eliges la carpeta navegando por las carpetas del NAS, o escribiéndola. Se abre en la última que usaste y tienes atajos a la carpeta por defecto y a las recientes.
+- Al enviar eliges la carpeta navegando por las carpetas del NAS, o escribiéndola. Se abre en la última que usaste, tienes atajos a la carpeta por defecto y a las recientes, y puedes crear carpetas nuevas.
 
 **Plex o Jellyfin (opcional)**
 - En cada ficha marca qué episodios o películas tienes ya en tu servidor Plex, en Jellyfin o en los dos a la vez (una marca por servidor, en su color).
@@ -101,6 +101,7 @@ Requiere DSM 7 con Download Station.
    - Dale **lectura/escritura** en las carpetas donde quieras guardar las descargas. Al explorar solo verás esas carpetas.
    - No le actives la verificación en dos pasos.
    - En Download Station, con tu administrador: **⚙ Configuración → General → Habilitar descargas eMule**.
+   - **Importante:** inicia sesión en DSM una vez con el usuario que has creado, abre Download Station y elige una carpeta de destino por defecto. Si no lo haces, las descargas pueden quedarse en «Finalizando» o dar error.
 2. **En UIspa:** en los ajustes, sección **Descargas en el NAS (Synology)**:
    - **Dirección:** por ejemplo `http://192.168.1.10:5000`. Con HTTPS solo funciona si el NAS tiene un certificado válido; el autofirmado de fábrica lo rechaza el navegador.
    - **Usuario y contraseña** del usuario que has creado.
@@ -153,6 +154,10 @@ Las tres versiones comparten el mismo código; solo cambian el manifiesto y el s
 - La coincidencia exacta con el servidor se basa en el tamaño que muestra la web, redondeado a dos decimales. Si renombras o recomprimes un archivo, aparecerá como «≈» u «otra calidad».
 
 ## Novedades
+
+**2.2.2**
+- Crear carpetas en el NAS desde el explorador al enviar (＋ Nueva carpeta).
+- Instrucciones: hay que iniciar sesión una vez en DSM con el usuario creado y elegir una carpeta por defecto en Download Station.
 
 **2.2.1**
 - Portada más limpia: al pasar el ratón por una carátula ya no aparecen la sinopsis ni las calidades.
